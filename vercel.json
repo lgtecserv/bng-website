@@ -1,39 +1,23 @@
 {
-  "version": 2,
   "buildCommand": "npm run build:website",
   "outputDirectory": "website-dist",
-  "cleanUrls": true,
-  "routes": [
+  "cleanUrls": false,
+  "rewrites": [
     {
-      "src": "/sitemap.xml",
-      "dest": "/sitemap.xml"
-    },
-    {
-      "src": "/robots.txt",
-      "dest": "/robots.txt"
-    },
-    {
-      "src": "/BNG_Imovel.apk",
-      "dest": "/BNG_Imovel.apk"
-    },
-    {
-      "src": "/BNG%20Imovel.apk",
-      "dest": "/BNG_Imovel.apk"
-    },
-    {
-      "src": "/assets/(.*)",
-      "headers": { "cache-control": "public, max-age=31536000, immutable" },
-      "dest": "/assets/$1"
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ],
   "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
     {
       "source": "/(.*)",
       "headers": [

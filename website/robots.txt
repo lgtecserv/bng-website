@@ -1,0 +1,21 @@
+# Robots.txt Oficial do Grupo BNG (Moçambique)
+# Domínio: https://www.grupobngoficial.com
+
+User-agent: *
+Allow: /
+Allow: /imobiliario
+Allow: /servicos
+Allow: /servicos/limpeza
+Allow: /servicos/procurement
+Allow: /publicar
+Allow: /baixar-app
+Allow: /contato
+
+# Bloqueio de áreas administrativas e scripts internos
+Disallow: /admin
+Disallow: /api/admin
+Disallow: /scratch/
+Disallow: /scripts/
+
+# Sitemap Oficial para indexação no Google Search Console
+Sitemap: https://www.grupobngoficial.com/sitemap.xml

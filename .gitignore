@@ -1,0 +1,36 @@
+# Dependências
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs temporários (se gerados dinamicamente)
+dist/
+dist-ssr/
+*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Segredos e Ambientes Locais
+.env.local
+.env.*.local
+
+# Chaves sensíveis (mantidas locais para segurança)
+*.keystore
+*.jks
+google-services.json
+
+# IDEs e Sistema
+.vscode/
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+scratch/

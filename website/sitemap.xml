@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+
+  <!-- Página Inicial / Home -->
+  <url>
+    <loc>https://www.grupobngoficial.com/</loc>
+    <lastmod>2026-10-28</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- Portal Imobiliário e Classificados -->
+  <url>
+    <loc>https://www.grupobngoficial.com/imobiliario</loc>
+    <lastmod>2026-10-28</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Serviços Corporativos -->
+  <url>
+    <loc>https://www.grupobngoficial.com/servicos</loc>
+    <lastmod>2026-10-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Limpeza & Facility Management -->
+  <url>
+    <loc>https://www.grupobngoficial.com/servicos/limpeza</loc>
+    <lastmod>2026-10-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Procurement & Negócios Corporativos -->
+  <url>
+    <loc>https://www.grupobngoficial.com/servicos/procurement</loc>
+    <lastmod>2026-10-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Publicação de Imóveis -->
+  <url>
+    <loc>https://www.grupobngoficial.com/publicar</loc>
+    <lastmod>2026-10-28</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Baixar Aplicativo APK / Play Store -->
+  <url>
+    <loc>https://www.grupobngoficial.com/baixar-app</loc>
+    <lastmod>2026-10-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Contato e Localização -->
+  <url>
+    <loc>https://www.grupobngoficial.com/contato</loc>
+    <lastmod>2026-10-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+</urlset>

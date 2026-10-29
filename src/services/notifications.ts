@@ -137,19 +137,33 @@ export async function requestNotificationPermission(): Promise<boolean> {
 }
 
 /**
- * Envia uma notificação completa na aplicação (com som, vibração e banner do sistema)
+ * Envia uma notificação completa na aplicação com estrita filtragem de segurança e privacidade
  */
 export function triggerAppNotification(
   title: string,
   body: string,
   type: AppNotification['type'] = 'system',
   actionScreen?: string,
-  actionId?: string
+  actionId?: string,
+  targetAudience: 'all' | 'admin_only' | 'user_only' = 'all',
+  targetUserId?: string
 ): void {
-  // 1. Reproduz som padrão de notificação e vibração
+  const savedUserStr = typeof localStorage !== 'undefined' ? localStorage.getItem('bng_auth_user') : null;
+  const savedUser = savedUserStr ? JSON.parse(savedUserStr) : null;
+  const isLocalUserAdmin = savedUser?.role === 'admin';
+
+  // 1. Filtragem de Segurança e Privacidade
+  if (targetAudience === 'admin_only' && !isLocalUserAdmin) {
+    return; // Clientes comuns e visitantes jamais recebem alertas ou dados internos
+  }
+  if (targetAudience === 'user_only' && targetUserId && savedUser?.id !== targetUserId) {
+    return;
+  }
+
+  // 2. Reproduz som padrão de notificação e vibração
   playDefaultNotificationSound();
 
-  // 2. Dispara notificação nativa no APK Android (barra de status do telemóvel)
+  // 3. Dispara notificação nativa no APK Android (barra de status do telemóvel)
   if (typeof window !== 'undefined' && window.AndroidBridge?.showNativeNotification) {
     try {
       window.AndroidBridge.showNativeNotification(title, body);
@@ -158,7 +172,7 @@ export function triggerAppNotification(
     }
   }
 
-  // 3. Cria notificação no navegador / PWA se houver permissão
+  // 4. Cria notificação no navegador / PWA se houver permissão
   if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
     try {
       new Notification(title, {
@@ -171,7 +185,7 @@ export function triggerAppNotification(
     }
   }
 
-  // 3. Adiciona à lista interna de notificações
+  // 5. Adiciona à lista interna de notificações
   const current = getStoredNotifications();
   const newNotif: AppNotification = {
     id: `notif-${Date.now()}`,
@@ -196,10 +210,25 @@ export function markAllNotificationsAsRead(): void {
 }
 
 /**
- * Retorna o número de notificações não lidas
+ * Retorna o número de notificações não lidas protegidas por papel
  */
 export function getUnreadNotificationsCount(): number {
-  return getStoredNotifications().filter(n => !n.isRead).length;
+  const savedUserStr = typeof localStorage !== 'undefined' ? localStorage.getItem('bng_auth_user') : null;
+  const isLocalUserAdmin = savedUserStr ? JSON.parse(savedUserStr)?.role === 'admin' : false;
+
+  return getStoredNotifications().filter(n => {
+    if (!isLocalUserAdmin) {
+      if (
+        n.title.toLowerCase().includes('lead') || 
+        n.title.toLowerCase().includes('pedido de imóvel') || 
+        n.body.toLowerCase().includes('tel:') ||
+        n.body.toLowerCase().includes('procura')
+      ) {
+        return false;
+      }
+    }
+    return !n.isRead;
+  }).length;
 }
 
 export { openDeviceSettings };

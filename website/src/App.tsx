@@ -8,9 +8,15 @@ import { ProcurementPage } from './pages/ProcurementPage';
 import { ContatoPage } from './pages/ContatoPage';
 import { AdminDashboardPage } from './pages/AdminDashboardPage';
 import { PublicarImovelPage } from './pages/PublicarImovelPage';
+import { PoliticaPrivacidadePage } from './pages/PoliticaPrivacidadePage';
+import { TermosUsoPage } from './pages/TermosUsoPage';
+import { PoliticaParceriasPage } from './pages/PoliticaParceriasPage';
 import { ListingDetailModal } from './components/ListingDetailModal';
 import { AuthModal } from './components/AuthModal';
+import { AiHelpModal } from './components/AiHelpModal';
+import { CookieBanner } from './components/CookieBanner';
 import { Footer } from './components/Footer';
+import { Bot } from 'lucide-react';
 import { 
   fetchWebsiteListings, 
   fetchWebsiteCategories, 
@@ -29,7 +35,10 @@ const PAGE_URL_MAP: Record<ActivePage, string> = {
   'baixar-app': '/baixar-app',
   'contato': '/contato',
   'publicar': '/publicar',
-  'admin': '/admin'
+  'admin': '/admin',
+  'privacidade': '/privacidade',
+  'termos': '/termos',
+  'parcerias': '/parcerias'
 };
 
 function getPageFromPath(path: string): ActivePage {
@@ -42,6 +51,9 @@ function getPageFromPath(path: string): ActivePage {
   if (cleanPath.includes('contato')) return 'contato';
   if (cleanPath.includes('publicar')) return 'publicar';
   if (cleanPath.includes('admin')) return 'admin';
+  if (cleanPath.includes('privacidade')) return 'privacidade';
+  if (cleanPath.includes('termo')) return 'termos';
+  if (cleanPath.includes('parceria')) return 'parcerias';
   return 'home';
 }
 
@@ -65,6 +77,7 @@ export default function App() {
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [pendingPublishAfterAuth, setPendingPublishAfterAuth] = useState(false);
+  const [isAiHelpOpen, setIsAiHelpOpen] = useState(false);
 
   // Load initial data and user session
   useEffect(() => {
@@ -80,6 +93,18 @@ export default function App() {
         ]);
         setCategories(cats);
         setListings(items);
+
+        // Deep-linking de imóvel via URL (?imovel=ID)
+        if (typeof window !== 'undefined') {
+          const urlParams = new URLSearchParams(window.location.search);
+          const targetImovelId = urlParams.get('imovel');
+          if (targetImovelId) {
+            const found = items.find(i => i.id === targetImovelId);
+            if (found) {
+              setSelectedListing(found);
+            }
+          }
+        }
       } catch (err) {
         console.error('Erro ao carregar dados do Supabase:', err);
       } finally {
@@ -154,6 +179,7 @@ export default function App() {
         }}
         onOpenPublish={handleOpenPublish}
         onLogout={handleLogout}
+        onOpenAiHelp={() => setIsAiHelpOpen(true)}
       />
 
       {/* Renderização Condicional da Página Selecionada */}
@@ -216,19 +242,59 @@ export default function App() {
             }}
           />
         )}
+
+        {activePage === 'privacidade' && (
+          <PoliticaPrivacidadePage onBackHome={() => handleNavigate('home')} />
+        )}
+
+        {activePage === 'termos' && (
+          <TermosUsoPage onBackHome={() => handleNavigate('home')} />
+        )}
+
+        {activePage === 'parcerias' && (
+          <PoliticaParceriasPage onBackHome={() => handleNavigate('home')} />
+        )}
       </main>
 
-      {/* Rodapé Corporativo com Links Diretos para cada Serviço */}
+      {/* Rodapé Corporativo com Links Diretos para cada Serviço e Selo LG Tecserv */}
       <Footer
         onNavigate={handleNavigate}
         onOpenPublish={handleOpenPublish}
       />
+
+      {/* Banner de Consentimento de Cookies & Transparência */}
+      <CookieBanner onNavigate={handleNavigate} />
 
       {/* Modal de Detalhes do Imóvel (Com Imagens 100% íntegras sem cortes) */}
       <ListingDetailModal
         listing={selectedListing}
         onClose={() => setSelectedListing(null)}
       />
+
+      {/* Modal do Consultor e Assistente IA Oficial */}
+      <AiHelpModal
+        isOpen={isAiHelpOpen}
+        onClose={() => setIsAiHelpOpen(false)}
+        onSelectListing={(item) => setSelectedListing(item)}
+      />
+
+      {/* Botão Flutuante de Ajuda IA (Canto Inferior Direito) */}
+      <button
+        onClick={() => setIsAiHelpOpen(true)}
+        className="fixed bottom-6 right-6 z-40 bg-gradient-to-r from-[#D4AF37] via-[#C89B3C] to-[#AA7C1E] text-slate-950 font-black px-4 py-3 rounded-full shadow-2xl flex items-center space-x-2.5 border-2 border-white/80 hover:scale-105 active:scale-95 transition-all group"
+        title="Falar com o Consultor Imobiliário Oficial"
+      >
+        <div className="relative">
+          <Bot className="w-5 h-5 text-slate-950" />
+          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping" />
+        </div>
+        <span className="text-xs tracking-wide uppercase font-extrabold hidden sm:inline">
+          Ajuda IA • Consultor BNG
+        </span>
+        <span className="text-xs tracking-wide uppercase font-extrabold sm:hidden">
+          Ajuda IA
+        </span>
+      </button>
 
       {/* Modal de Login / Registro */}
       <AuthModal

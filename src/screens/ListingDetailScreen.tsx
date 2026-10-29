@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { fetchListingById, recordContactClick } from '../services/supabase';
+import { fetchListingById, recordContactClick, recordListingView } from '../services/supabase';
 import { openExternalUrl } from '../services/nativeBridge';
 import { Listing } from '../types';
 import { 
   ArrowLeft, Heart, Share2, Phone, MessageCircle, MapPin, 
   Bed, Bath, Maximize, ShieldCheck, CheckCircle2, ChevronLeft, ChevronRight,
-  Calendar, FileText, AlertCircle
+  Calendar, FileText, AlertCircle, Eye
 } from 'lucide-react';
 
 export const ListingDetailScreen: React.FC = () => {
@@ -34,6 +34,12 @@ export const ListingDetailScreen: React.FC = () => {
         if (isMounted) {
           setListing(res);
           setLoading(false);
+          // Incrementa e sincroniza visualizações oficiais
+          recordListingView(selectedListingId).then((newCount) => {
+            if (isMounted) {
+              setListing(prev => prev ? { ...prev, viewsCount: newCount } : prev);
+            }
+          });
         }
       })
       .catch(err => {
@@ -72,14 +78,19 @@ export const ListingDetailScreen: React.FC = () => {
   };
 
   const handleShare = () => {
+    const officialDomainUrl = `https://www.grupobngoficial.com/?imovel=${listing.id}`;
+    const priceFormatted = `${formatPrice(listing.price)} MT`;
+    const shareTitle = `${listing.title} • Grupo BNG`;
+    const shareText = `Confira este imóvel no Grupo BNG: ${listing.title} por ${priceFormatted} em ${listing.district}, ${listing.province}.\n\nAcesse no link: ${officialDomainUrl}`;
+
     if (navigator.share) {
       navigator.share({
-        title: listing.title,
-        text: `Confira este anúncio no Grupo BNG: ${listing.title} por ${formatPrice(listing.price)} MT`,
-        url: window.location.href,
+        title: shareTitle,
+        text: shareText,
+        url: officialDomainUrl,
       }).catch(() => {});
     } else {
-      navigator.clipboard.writeText(window.location.href);
+      navigator.clipboard.writeText(`${shareText}\n${officialDomainUrl}`);
       setShareFeedback(true);
       setTimeout(() => setShareFeedback(false), 3000);
     }
@@ -198,7 +209,17 @@ export const ListingDetailScreen: React.FC = () => {
                 {listing.transactionType === 'sale' ? 'Para Venda' : 'Para Arrendamento'}
               </span>
             </div>
-            <span className="text-[11px] text-slate-400 font-medium">Ref: {listing.id}</span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] text-slate-400 font-medium">Ref: {listing.id}</span>
+              <span className="text-slate-300">•</span>
+              <div 
+                className="inline-flex items-center gap-1.5 bg-amber-50/90 text-amber-950 px-2.5 py-0.5 rounded-full text-[11px] font-bold border border-amber-200/80 shadow-xs"
+                title="Número de visualizações do imóvel"
+              >
+                <Eye className="w-3.5 h-3.5 text-[#C89B3C]" />
+                <span>{new Intl.NumberFormat('pt-MZ').format(listing.viewsCount || 1)} visualizações</span>
+              </div>
+            </div>
           </div>
 
           {(listing.isSold || listing.status === 'completed') && (
@@ -240,14 +261,169 @@ export const ListingDetailScreen: React.FC = () => {
         {/* Características Principais Específicas */}
         <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-4">
           <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-            {listing.categoryName?.toLowerCase().includes('terreno') ? 'Especificações do Terreno' :
-             listing.categoryName?.toLowerCase().includes('viatura') ? 'Especificações da Viatura' :
+            {listing.categoryName?.toLowerCase().includes('condomínio') || listing.categoryName?.toLowerCase().includes('condominio') || listing.condoTotalHouses !== undefined ? 'Especificações do Condomínio & Moradias' :
+             listing.categoryName?.toLowerCase().includes('terreno') ? 'Especificações do Terreno' :
+             listing.categoryName?.toLowerCase().includes('viatura') || listing.categoryName?.toLowerCase().includes('carro') ? 'Especificações da Viatura / Máquina' :
              listing.categoryName?.toLowerCase().includes('armazém') || listing.categoryName?.toLowerCase().includes('comercial') || listing.categoryName?.toLowerCase().includes('escritório') ? 'Especificações Comerciais' :
              'Características do Imóvel'}
           </h2>
 
-          {/* TERRENO */}
-          {(listing.categoryName?.toLowerCase().includes('terreno') || listing.landDimensions) ? (
+          {/* CONDOMÍNIO RESIDENCIAL */}
+          {(listing.categoryName?.toLowerCase().includes('condomínio') || listing.categoryName?.toLowerCase().includes('condominio') || listing.condoTotalHouses !== undefined) ? (
+            <div className="space-y-4">
+              {/* DADOS GERAIS DO CONDOMÍNIO */}
+              <div className="bg-amber-50/70 border border-[#C89B3C]/30 p-4 rounded-2xl space-y-3">
+                <div className="flex items-center space-x-2 text-[#C89B3C]">
+                  <span className="material-symbols-outlined text-[20px]">holiday_village</span>
+                  <span className="font-extrabold text-xs uppercase tracking-wider text-slate-900">
+                    Dados Gerais do Empreendimento / Condomínio
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+                  {listing.condoCommercialModel && (
+                    <div className="bg-white p-2.5 rounded-xl border border-slate-200">
+                      <span className="text-[10px] text-slate-400 block font-bold uppercase">Modalidade</span>
+                      <span className="font-extrabold text-slate-900 text-xs">
+                        {listing.condoCommercialModel === 'venda_todo' ? 'Condomínio Completo' :
+                         listing.condoCommercialModel === 'arrendamento_casas' ? 'Arrendamento de Casas' :
+                         listing.condoCommercialModel === 'venda_e_arrendamento' ? 'Venda & Arrendamento' : 'Venda de Fracções'}
+                      </span>
+                    </div>
+                  )}
+
+                  {(listing.condoTotalAreaM2 || listing.areaM2) && (
+                    <div className="bg-white p-2.5 rounded-xl border border-slate-200">
+                      <span className="text-[10px] text-slate-400 block font-bold uppercase">Área Total do Condomínio</span>
+                      <span className="font-extrabold text-slate-900 text-sm">
+                        {listing.condoTotalAreaM2 || listing.areaM2} m²
+                      </span>
+                    </div>
+                  )}
+
+                  {listing.condoTotalHouses !== undefined && (
+                    <div className="bg-white p-2.5 rounded-xl border border-slate-200">
+                      <span className="text-[10px] text-slate-400 block font-bold uppercase">Total de Moradias</span>
+                      <span className="font-extrabold text-[#C89B3C] text-sm">
+                        {listing.condoTotalHouses} Casas
+                      </span>
+                    </div>
+                  )}
+
+                  {listing.condoAvailableHouses !== undefined && (
+                    <div className="bg-white p-2.5 rounded-xl border border-slate-200">
+                      <span className="text-[10px] text-slate-400 block font-bold uppercase">Casas Disponíveis</span>
+                      <span className="font-extrabold text-emerald-700 text-sm">
+                        {listing.condoAvailableHouses} Disponíveis
+                      </span>
+                    </div>
+                  )}
+
+                  {listing.condoConstructionStatus && (
+                    <div className="bg-white p-2.5 rounded-xl border border-slate-200">
+                      <span className="text-[10px] text-slate-400 block font-bold uppercase">Estado da Obra</span>
+                      <span className="font-extrabold text-slate-900 text-xs">
+                        {listing.condoConstructionStatus === 'pronto_habitar' ? 'Pronto a Habitar' :
+                         listing.condoConstructionStatus === 'em_obra' ? 'Em Obras / Construção' : 'Projeto em Planta'}
+                      </span>
+                    </div>
+                  )}
+
+                  {listing.condoHasSecurity !== undefined && (
+                    <div className="bg-white p-2.5 rounded-xl border border-slate-200">
+                      <span className="text-[10px] text-slate-400 block font-bold uppercase">Segurança Privada</span>
+                      <span className="font-extrabold text-slate-900 text-xs">
+                        {listing.condoHasSecurity ? 'Sim (Portaria & Acesso)' : 'Sem segurança'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {listing.condoLocationReference && (
+                  <div className="bg-white p-2.5 rounded-xl border border-slate-200 text-xs flex items-start space-x-2">
+                    <MapPin className="w-4 h-4 text-[#C89B3C] shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="text-slate-600 block text-[10px] uppercase font-bold">Localização do Condomínio:</strong>
+                      <span className="text-slate-900 font-semibold">{listing.condoLocationReference}</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Comodidades Comuns do Condomínio */}
+                <div className="flex flex-wrap gap-1.5 pt-1 text-xs">
+                  {listing.condoHasCommonPool && (
+                    <span className="bg-sky-50 text-sky-800 border border-sky-200 px-2.5 py-1 rounded-full font-bold text-[11px] flex items-center space-x-1">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-sky-600" />
+                      <span>Piscina Comum</span>
+                    </span>
+                  )}
+                  {listing.condoHasPlayground && (
+                    <span className="bg-amber-50 text-amber-900 border border-amber-200 px-2.5 py-1 rounded-full font-bold text-[11px] flex items-center space-x-1">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#C89B3C]" />
+                      <span>Parque Infantil / Lazer</span>
+                    </span>
+                  )}
+                  {listing.condoHasGeneratorOrBorehole && (
+                    <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-full font-bold text-[11px] flex items-center space-x-1">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Gerador / Furo de Água Comum</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* CARACTERÍSTICAS DA MORADIA */}
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                <div className="flex items-center space-x-2 text-slate-800">
+                  <span className="material-symbols-outlined text-[18px] text-[#C89B3C]">cottage</span>
+                  <span className="font-extrabold text-xs uppercase tracking-wider text-slate-900">
+                    Características das Moradias {listing.condoHouseTypology ? `(${listing.condoHouseTypology})` : ''}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+                  {listing.bedrooms !== undefined && (
+                    <div className="bg-white p-3 rounded-2xl border border-slate-100 flex items-center space-x-2">
+                      <Bed className="w-4 h-4 text-[#C89B3C]" />
+                      <div>
+                        <div className="font-bold text-slate-900">{listing.bedrooms} Quartos</div>
+                        {listing.suites ? <div className="text-[10px] text-slate-400">({listing.suites} suíte)</div> : null}
+                      </div>
+                    </div>
+                  )}
+
+                  {listing.bathrooms !== undefined && (
+                    <div className="bg-white p-3 rounded-2xl border border-slate-100 flex items-center space-x-2">
+                      <Bath className="w-4 h-4 text-[#C89B3C]" />
+                      <div>
+                        <div className="font-bold text-slate-900">{listing.bathrooms} Casas de Banho</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {listing.areaM2 !== undefined && (
+                    <div className="bg-white p-3 rounded-2xl border border-slate-100 flex items-center space-x-2">
+                      <Maximize className="w-4 h-4 text-[#C89B3C]" />
+                      <div>
+                        <div className="font-bold text-slate-900">{listing.areaM2} m²</div>
+                        <div className="text-[10px] text-slate-400">Área Útil da Moradia</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {listing.parkingSpaces !== undefined && (
+                    <div className="bg-white p-3 rounded-2xl border border-slate-100 flex items-center space-x-2">
+                      <span className="material-symbols-outlined text-[#C89B3C] text-[18px]">local_parking</span>
+                      <div>
+                        <div className="font-bold text-slate-900">{listing.parkingSpaces} Vagas</div>
+                        <div className="text-[10px] text-slate-400">Estacionamento</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (listing.categoryName?.toLowerCase().includes('terreno') || listing.landDimensions) ? (
             <div className="space-y-3 text-xs">
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
                 {listing.landDimensions && (

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { Search, PlusCircle, User, ShieldCheck, Bell } from 'lucide-react';
+import { Search, PlusCircle, User, ShieldCheck, Bell, Sparkles } from 'lucide-react';
 import logoImg from '../assets/logo.png';
 
 export const AppHeader: React.FC = () => {
@@ -10,7 +10,8 @@ export const AppHeader: React.FC = () => {
     isAuthenticated, 
     openAuthModal, 
     openNotificationCenter, 
-    unreadNotificationsCount 
+    unreadNotificationsCount,
+    openAiHelp
   } = useApp();
 
   const handlePublishClick = () => {
@@ -47,7 +48,17 @@ export const AppHeader: React.FC = () => {
         </button>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-1 sm:gap-2.5">
+        <div className="flex items-center gap-1 sm:gap-2">
+          {/* Botão Oficial Ajuda com IA */}
+          <button
+            onClick={openAiHelp}
+            className="flex items-center gap-1.5 px-2.5 py-1 sm:py-1.5 rounded-full bg-gradient-to-r from-amber-500/15 via-[#C89B3C]/20 to-amber-400/15 hover:from-amber-500/30 hover:to-[#C89B3C]/30 text-[#E3BE63] border border-[#C89B3C]/40 text-xs font-bold transition-all shadow-sm active:scale-95 shrink-0"
+            title="Ajuda com Inteligência Artificial BNG"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-[#C89B3C] fill-[#C89B3C]" />
+            <span className="hidden xs:inline">Ajuda</span>
+          </button>
+
           {/* Botão de Pesquisa */}
           <button
             onClick={() => navigateTo('search')}

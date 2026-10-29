@@ -381,19 +381,10 @@ export const AccountScreen: React.FC = () => {
         )}
 
         {/* Informações Institucionais Grupo BNG */}
-        <div className="p-4 text-center text-slate-400 text-[11px] space-y-2">
+        <div className="p-4 text-center text-slate-400 text-[11px] space-y-1.5">
           <p className="font-semibold text-slate-600">Grupo BNG — Imobiliária &amp; Negócios</p>
           <p>Maputo, Moçambique • Taxa padrão: 150 MT</p>
           <p className="text-[10px]">Versão 1.0.0 Oficial</p>
-          
-          <div className="pt-2">
-            <button
-              onClick={() => navigateTo('admin-login')}
-              className="text-[10px] text-slate-400 hover:text-slate-600 underline font-medium"
-            >
-              Portal Administrativo Interno
-            </button>
-          </div>
         </div>
       </div>
     </div>

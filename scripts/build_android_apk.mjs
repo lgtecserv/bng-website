@@ -734,9 +734,22 @@ public class NetworkReceiver extends BroadcastReceiver {
   console.log('12. A verificar assinatura do APK...');
   run(`"${JAVA}" -jar "${APKSIGNER_JAR}" verify --verbose "${finalApkPath}"`);
 
-  // 15. Criar cópia com underline para links e compatibilidade adicional
+  // 15. Criar cópia com underline e espaço para compatibilidade total de links
   fs.copyFileSync(finalApkPath, path.join(ROOT_DIR, 'BNG_Imovel.apk'));
   fs.copyFileSync(finalApkPath, path.join(ROOT_DIR, 'public', 'BNG_Imovel.apk'));
+  fs.copyFileSync(finalApkPath, path.join(ROOT_DIR, 'public', 'BNG Imovel.apk'));
+
+  const websitePublicDir = path.join(ROOT_DIR, 'website', 'public');
+  if (fs.existsSync(websitePublicDir)) {
+    fs.copyFileSync(finalApkPath, path.join(websitePublicDir, 'BNG_Imovel.apk'));
+    fs.copyFileSync(finalApkPath, path.join(websitePublicDir, 'BNG Imovel.apk'));
+  }
+
+  const websiteDistDir = path.join(ROOT_DIR, 'website-dist');
+  if (fs.existsSync(websiteDistDir)) {
+    fs.copyFileSync(finalApkPath, path.join(websiteDistDir, 'BNG_Imovel.apk'));
+    fs.copyFileSync(finalApkPath, path.join(websiteDistDir, 'BNG Imovel.apk'));
+  }
 
   console.log('\n====================================================');
   console.log(`✅ SUCESSO! APK GERADO COM ÊXITO:`);

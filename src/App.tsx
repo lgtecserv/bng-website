@@ -6,6 +6,8 @@ import { AuthModal } from './components/AuthModal';
 import { NotificationOnboardingModal } from './components/NotificationOnboardingModal';
 import { NotificationCenterModal } from './components/NotificationCenterModal';
 import { AppUpdateModal } from './components/AppUpdateModal';
+import { AiHelpModal } from './components/AiHelpModal';
+import { Sparkles } from 'lucide-react';
 import {
   supabase,
   getGlobalBroadcastChannel,
@@ -32,19 +34,56 @@ import { AdminBannersScreen } from './screens/AdminBannersScreen';
 import { AdminSettingsScreen } from './screens/AdminSettingsScreen';
 
 export const App: React.FC = () => {
-  const { currentScreen, isNotificationCenterOpen, closeNotificationCenter, triggerRefresh } = useApp();
+  const { 
+    currentScreen, 
+    currentUser,
+    navigateTo,
+    isNotificationCenterOpen, 
+    closeNotificationCenter, 
+    triggerRefresh,
+    isAiHelpOpen,
+    openAiHelp,
+    closeAiHelp
+  } = useApp();
   const [showNotificationOnboarding, setShowNotificationOnboarding] = useState(false);
 
   useEffect(() => {
+    // 0. Suporte a partilha direta por link (ex: https://www.grupobngoficial.com/?imovel=bng-101)
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const sharedImovelId = urlParams.get('imovel') || urlParams.get('listing') || urlParams.get('id');
+      if (sharedImovelId) {
+        navigateTo('detail', { listingId: sharedImovelId });
+      }
+    } catch {}
+
     // 1. Verifica se já concluiu a configuração de notificações obrigatória
     const completed = localStorage.getItem('bng_notification_onboarding_completed') === 'true';
     if (!completed && !isNotificationActive()) {
       setShowNotificationOnboarding(true);
     }
 
-    // 2. Processador de anúncios em tempo real vindos de outros utilizadores / admin
+    // 2. Processador de anúncios em tempo real vindos de outros utilizadores / admin com estrita segurança
     const processIncomingAnnouncement = (ann: GlobalBroadcastMessage) => {
       if (!ann || !ann.id) return;
+
+      // Filtro de Segurança 1: Alertas exclusivos de Administrador (Leads de clientes, moderações, etc.)
+      const ADMIN_EMAILS = ['lgtecserv@gmail.com', 'grupobngoficial@gmail.com', 'admin@grupobng.co.mz'];
+      if (ann.targetAudience === 'admin_only') {
+        const isAdmin = currentUser.role === 'admin' && ADMIN_EMAILS.includes(currentUser.email.toLowerCase().trim());
+        if (!isAdmin) {
+          // Ignora silenciosamente para utilizadores comuns e visitantes
+          return;
+        }
+      }
+
+      // Filtro de Segurança 2: Notificações direcionadas a um utilizador específico (ex: aprovação do seu anúncio)
+      if (ann.targetAudience === 'user_only' && ann.targetUserId) {
+        if (currentUser.id !== ann.targetUserId) {
+          return;
+        }
+      }
+
       const seenKey = `bng_seen_ann_${ann.id}`;
       if (localStorage.getItem(seenKey)) return;
 
@@ -216,6 +255,29 @@ export const App: React.FC = () => {
 
       {/* Modal de Atualização de Nova Versão do APK */}
       <AppUpdateModal />
+
+      {/* Assistente de IA "Ajuda" */}
+      <AiHelpModal isOpen={isAiHelpOpen} onClose={closeAiHelp} />
+
+      {/* Botão Flutuante Ajuda BNG IA (Acesso Rápido em Todas as Telas Principais) */}
+      {!isWelcomeScreen && !isAdminScreen && !isAiHelpOpen && (
+        <button
+          onClick={openAiHelp}
+          aria-label="Ajuda BNG"
+          className="fixed z-30 bottom-16 sm:bottom-6 right-3 sm:right-6 flex items-center gap-2 bg-[#14181B]/95 backdrop-blur-md text-white pl-3 pr-3.5 py-2 rounded-full border border-[#C89B3C]/50 shadow-2xl hover:shadow-[#C89B3C]/30 hover:scale-105 active:scale-95 transition-all group"
+        >
+          <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-[#9B7423] via-[#C89B3C] to-[#F3D785] text-[#14181B] flex items-center justify-center shrink-0 shadow">
+            <Sparkles className="w-3.5 h-3.5 fill-current animate-pulse" />
+          </div>
+          <div className="text-left">
+            <div className="text-[11px] font-bold text-[#E3BE63] leading-none flex items-center gap-1">
+              <span>Ajuda</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            </div>
+            <div className="text-[9px] text-slate-300 leading-none mt-0.5">Buscar Imóvel</div>
+          </div>
+        </button>
+      )}
     </div>
   );
 };

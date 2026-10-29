@@ -1,5 +1,5 @@
 import React from 'react';
-import { Phone, Mail, MapPin, MessageSquare, Download, ShieldCheck, Smartphone } from 'lucide-react';
+import { Phone, Mail, MapPin, MessageSquare, Download, ShieldCheck, Smartphone, Handshake, ExternalLink } from 'lucide-react';
 import { ActivePage } from './Header';
 
 interface FooterProps {
@@ -45,7 +45,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenPublish }) => 
             </div>
           </div>
 
-          {/* Coluna 2: Navegação Rápida entre Páginas */}
+          {/* Coluna 2: Navegação & Serviços */}
           <div>
             <h4 className="text-xs font-bold uppercase tracking-wider text-[#C89B3C] mb-4">Páginas Oficiais</h4>
             <ul className="space-y-2.5 text-xs text-slate-400">
@@ -83,32 +83,45 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenPublish }) => 
             </ul>
           </div>
 
-          {/* Coluna 3: Aplicativo Mobile */}
+          {/* Coluna 3: Institucional & Parcerias */}
           <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-[#C89B3C] mb-4">App Nativo Android</h4>
-            <p className="text-xs text-slate-400 font-light leading-relaxed mb-4">
-              Instale a aplicação nativa no seu smartphone para receber novidades e alertas em tempo real.
-            </p>
-            <div className="space-y-2">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-[#C89B3C] mb-4">Institucional & Parcerias</h4>
+            <ul className="space-y-2.5 text-xs text-slate-400">
+              <li>
+                <button 
+                  onClick={() => handleNav('parcerias')} 
+                  className="hover:text-white transition-colors flex items-center gap-1.5 text-slate-300 font-semibold"
+                >
+                  <Handshake className="w-3.5 h-3.5 text-[#C89B3C]" />
+                  <span>Políticas de Parcerias & Co-Corretagem</span>
+                </button>
+              </li>
+              <li>
+                <button onClick={() => handleNav('privacidade')} className="hover:text-white transition-colors">
+                  Políticas de Privacidade & Dados
+                </button>
+              </li>
+              <li>
+                <button onClick={() => handleNav('termos')} className="hover:text-white transition-colors">
+                  Termos e Condições de Uso
+                </button>
+              </li>
+            </ul>
+
+            <div className="pt-4 space-y-2">
+              <span className="text-[11px] font-bold text-slate-300 block">Aplicativo Oficial:</span>
               <a
                 href="/BNG_Imovel.apk"
                 download="BNG_Imovel.apk"
-                className="inline-flex items-center space-x-2 bg-gradient-to-r from-[#D4AF37] to-[#C89B3C] hover:opacity-95 text-[#14181B] font-extrabold px-4 py-2.5 rounded-xl text-xs shadow-md transition-all active:scale-95"
+                className="inline-flex items-center space-x-2 bg-gradient-to-r from-[#D4AF37] to-[#C89B3C] hover:opacity-95 text-[#14181B] font-extrabold px-3.5 py-2 rounded-xl text-xs shadow-md transition-all active:scale-95"
               >
                 <Download className="w-3.5 h-3.5 text-slate-900" />
-                <span>Descarregar APK (2.48 MB)</span>
+                <span>Instalar APK (2.48 MB)</span>
               </a>
-
-              <button
-                onClick={() => handleNav('baixar-app')}
-                className="block text-[11px] text-slate-400 hover:text-white underline"
-              >
-                Ver instruções de instalação no celular →
-              </button>
             </div>
           </div>
 
-          {/* Coluna 4: Contactos & Apoio */}
+          {/* Coluna 4: Contactos & Sede */}
           <div>
             <h4 className="text-xs font-bold uppercase tracking-wider text-[#C89B3C] mb-4">Atendimento & Sede</h4>
             <ul className="space-y-3 text-xs text-slate-400">
@@ -143,12 +156,49 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenPublish }) => 
           </div>
         </div>
 
-        {/* Direitos Reservados */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
+        {/* Rodapé Inferior: Direitos e Selo Oficial de Desenvolvimento LG Tecserv */}
+        <div className="pt-8 flex flex-col md:flex-row items-center justify-between text-xs text-slate-500 gap-4">
           <p>© {new Date().getFullYear()} Grupo BNG Imobiliária & Negócios Lda. Todos os direitos reservados.</p>
-          <div className="flex items-center space-x-6">
-            <span className="hover:text-slate-400 transition-colors">Termos & Privacidade</span>
-            <span className="hover:text-slate-400 transition-colors">Moçambique</span>
+
+          {/* Links Legais no Rodapé */}
+          <div className="flex flex-wrap items-center gap-4 text-xs">
+            <button 
+              onClick={() => handleNav('parcerias')} 
+              className="text-slate-400 hover:text-[#C89B3C] transition-colors"
+            >
+              Parcerias Imobiliárias
+            </button>
+            <span className="text-slate-700">•</span>
+            <button 
+              onClick={() => handleNav('privacidade')} 
+              className="text-slate-400 hover:text-[#C89B3C] transition-colors"
+            >
+              Privacidade
+            </button>
+            <span className="text-slate-700">•</span>
+            <button 
+              onClick={() => handleNav('termos')} 
+              className="text-slate-400 hover:text-[#C89B3C] transition-colors"
+            >
+              Termos de Uso
+            </button>
+          </div>
+
+          {/* SELO OFICIAL: Desenvolvido por LG Tecserv com Link */}
+          <div className="flex items-center">
+            <a
+              href="https://www.lgtecserv.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#C89B3C]/50 transition-all text-slate-400 hover:text-white"
+              title="LG Tecserv • Soluções em Tecnologia e Engenharia de Software"
+            >
+              <span className="text-[11px] text-slate-400">Website desenvolvido por</span>
+              <strong className="text-[11px] font-black text-white group-hover:text-[#C89B3C] transition-colors flex items-center gap-1">
+                <span>LG Tecserv</span>
+                <ExternalLink className="w-3 h-3 text-[#C89B3C] opacity-75 group-hover:opacity-100 transition-opacity" />
+              </strong>
+            </a>
           </div>
         </div>
       </div>

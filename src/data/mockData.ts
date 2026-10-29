@@ -15,13 +15,16 @@ export const MOZAMBIQUE_PROVINCES: Record<string, string[]> = {
 };
 
 export const INITIAL_CATEGORIES: Category[] = [
-  { id: 'cat-1', slug: 'casas', name: 'Casas', icon: 'home', displayOrder: 1, isActive: true, count: 84 },
-  { id: 'cat-2', slug: 'apartamentos', name: 'Apartamentos', icon: 'apartment', displayOrder: 2, isActive: true, count: 62 },
-  { id: 'cat-3', slug: 'terrenos', name: 'Terrenos', icon: 'landscape', displayOrder: 3, isActive: true, count: 45 },
-  { id: 'cat-4', slug: 'escritorios', name: 'Escritórios', icon: 'domain', displayOrder: 4, isActive: true, count: 18 },
-  { id: 'cat-5', slug: 'armazens', name: 'Armazéns', icon: 'warehouse', displayOrder: 5, isActive: true, count: 12 },
-  { id: 'cat-6', slug: 'comerciais', name: 'Espaços Comerciais', icon: 'storefront', displayOrder: 6, isActive: true, count: 15 },
-  { id: 'cat-7', slug: 'viaturas', name: 'Viaturas', icon: 'directions_car', displayOrder: 7, isActive: true, count: 28 },
+  { id: '688ce998-5398-4176-b62e-1248676e86e5', slug: 'casas-vivendas', name: 'Casas e Vivendas', icon: 'home', displayOrder: 1, isActive: true, count: 84 },
+  { id: 'b237199c-a8a4-4a82-b77c-7006d300b0fa', slug: 'apartamentos-flats', name: 'Apartamentos e Flats', icon: 'apartment', displayOrder: 2, isActive: true, count: 62 },
+  { id: 'b9d6d6ee-bc70-4197-95e1-43568854f5bc', slug: 'condominios', name: 'Condomínios Residenciais', icon: 'holiday_village', displayOrder: 3, isActive: true, count: 24 },
+  { id: 'f37eaa8d-8b7c-44b3-8f3b-71693012718c', slug: 'terrenos', name: 'Terrenos', icon: 'landscape', displayOrder: 4, isActive: true, count: 45 },
+  { id: '751d810a-94ba-4a8c-ba56-dcbecda6d0e8', slug: 'escritorios', name: 'Escritórios', icon: 'domain', displayOrder: 5, isActive: true, count: 18 },
+  { id: 'ad451530-c603-40c5-ac14-46c61df61845', slug: 'lojas-salas-comerciais', name: 'Lojas e Salas Comerciais', icon: 'storefront', displayOrder: 6, isActive: true, count: 15 },
+  { id: 'c4ecf6ad-0e62-4e5a-98d3-15d2ddbe06a3', slug: 'armazens-galpoes', name: 'Armazéns e Galpões', icon: 'warehouse', displayOrder: 7, isActive: true, count: 12 },
+  { id: 'saloes-eventos-id', slug: 'saloes-eventos', name: 'Salões de Eventos', icon: 'celebration', displayOrder: 8, isActive: true, count: 9 },
+  { id: 'contentores-modulares-id', slug: 'contentores-modulares', name: 'Contentores e Estruturas Modulares', icon: 'view_in_ar', displayOrder: 9, isActive: true, count: 14 },
+  { id: 'ccf09372-0523-44e8-9b82-307d3cbf8da5', slug: 'carros-maquinas', name: 'Carros e Máquinas', icon: 'directions_car', displayOrder: 10, isActive: true, count: 28 },
 ];
 
 export const INITIAL_BANNERS: Banner[] = [

@@ -50,8 +50,22 @@ export const PublicarImovelPage: React.FC<PublicarImovelPageProps> = ({
   const [errorMsg, setErrorMsg] = useState('');
 
   // Formulário por etapas
-  const [categoryId, setCategoryId] = useState('casas');
+  const [categoryId, setCategoryId] = useState('casas-vivendas');
   const [transactionType, setTransactionType] = useState<'sale' | 'rent'>('sale');
+
+  // Características Condomínios Residenciais
+  const [condoCommercialModel, setCondoCommercialModel] = useState<'venda_todo' | 'venda_fraccoes' | 'arrendamento_casas' | 'venda_e_arrendamento'>('venda_todo');
+  const [condoTotalAreaM2, setCondoTotalAreaM2] = useState<number | string>(5000);
+  const [condoTotalHouses, setCondoTotalHouses] = useState<number | string>(8);
+  const [condoAvailableHouses, setCondoAvailableHouses] = useState<number | string>(8);
+  const [condoConstructionStatus, setCondoConstructionStatus] = useState<'pronto_habitar' | 'em_obra' | 'em_projeto'>('pronto_habitar');
+  const [condoHasSecurity, setCondoHasSecurity] = useState(true);
+  const [condoSecurityDetails, setCondoSecurityDetails] = useState('Portaria 24h, Guarita, Cerca Elétrica');
+  const [condoLocationReference, setCondoLocationReference] = useState('');
+  const [condoHouseTypology, setCondoHouseTypology] = useState('T3');
+  const [condoHasCommonPool, setCondoHasCommonPool] = useState(false);
+  const [condoHasPlayground, setCondoHasPlayground] = useState(false);
+  const [condoHasGeneratorOrBorehole, setCondoHasGeneratorOrBorehole] = useState(true);
 
   // Características Residenciais
   const [bedrooms, setBedrooms] = useState(3);
@@ -103,10 +117,11 @@ export const PublicarImovelPage: React.FC<PublicarImovelPageProps> = ({
   const [paymentMethod, setPaymentMethod] = useState<'m_pesa' | 'e_mola' | 'bank_transfer'>('m_pesa');
   const [paymentReference, setPaymentReference] = useState('MPESA-' + Math.floor(100000 + Math.random() * 900000));
 
+  const isCondo = categoryId === 'condominios';
   const isLand = categoryId === 'terrenos';
-  const isVehicle = categoryId === 'viaturas';
-  const isCommercial = categoryId === 'escritorios' || categoryId === 'armazens' || categoryId === 'comerciais';
-  const isResidential = !isLand && !isVehicle && !isCommercial;
+  const isVehicle = categoryId === 'carros-maquinas' || categoryId === 'viaturas';
+  const isCommercial = categoryId === 'escritorios' || categoryId === 'lojas-salas-comerciais' || categoryId === 'armazens-galpoes' || categoryId === 'saloes-eventos' || categoryId === 'contentores-modulares';
+  const isResidential = isCondo || categoryId === 'casas-vivendas' || categoryId === 'apartamentos-flats';
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -141,13 +156,34 @@ export const PublicarImovelPage: React.FC<PublicarImovelPageProps> = ({
       return;
     }
 
+    let fullDescription = description.trim() || `Excelente imóvel localizado em ${district}, ${province}.`;
+    if (isCondo) {
+      fullDescription += `\n\n[ESPECIFICAÇÕES DO CONDOMÍNIO]:\nModalidade: ${
+        condoCommercialModel === 'venda_todo' ? 'Venda do Condomínio Todo' :
+        condoCommercialModel === 'arrendamento_casas' ? 'Arrendamento das Casas' :
+        condoCommercialModel === 'venda_e_arrendamento' ? 'Venda e Arrendamento' : 'Venda de Casas Particulares'
+      }\nÁrea Total do Condomínio: ${condoTotalAreaM2 || 0} m²\nTotal de Casas: ${condoTotalHouses || 0}\nCasas Disponíveis: ${condoAvailableHouses || 0}\nEstado: ${
+        condoConstructionStatus === 'pronto_habitar' ? 'Pronto a Habitar' :
+        condoConstructionStatus === 'em_obra' ? 'Em Obras' : 'Em Projeto'
+      }\nSegurança: ${condoHasSecurity ? 'Sim (Portaria & Acesso)' : 'Normal'}${condoLocationReference ? `\nLocalização do Condomínio: ${condoLocationReference}` : ''}${condoHasCommonPool ? '\nPiscina Comum: Sim' : ''}${condoHasPlayground ? '\nParque Infantil: Sim' : ''}${condoHasGeneratorOrBorehole ? '\nGerador / Furo de Água Comum: Sim' : ''}`;
+    }
+
     setSubmitting(true);
     try {
       await createWebsiteListing({
         title: title.trim(),
         transactionType,
         categoryId,
-        categoryName: isLand ? 'Terrenos' : isVehicle ? 'Viaturas' : isCommercial ? 'Comerciais' : 'Casas',
+        categoryName: isCondo ? 'Condomínios Residenciais' :
+                      categoryId === 'apartamentos-flats' ? 'Apartamentos e Flats' :
+                      categoryId === 'casas-vivendas' ? 'Casas e Vivendas' :
+                      isLand ? 'Terrenos' : 
+                      categoryId === 'escritorios' ? 'Escritórios' :
+                      categoryId === 'lojas-salas-comerciais' ? 'Lojas e Salas Comerciais' :
+                      categoryId === 'armazens-galpoes' ? 'Armazéns e Galpões' :
+                      categoryId === 'saloes-eventos' ? 'Salões de Eventos' :
+                      categoryId === 'contentores-modulares' ? 'Contentores e Estruturas Modulares' :
+                      isVehicle ? 'Carros e Máquinas' : 'Imóveis',
         price: Number(price),
         province,
         district: district.trim(),
@@ -169,7 +205,7 @@ export const PublicarImovelPage: React.FC<PublicarImovelPageProps> = ({
         vehicleMileage: isVehicle ? Number(vehicleMileage) : null,
         vehicleFuel: isVehicle ? vehicleFuel : null,
         vehicleTransmission: isVehicle ? vehicleTransmission : null,
-        description: description.trim() || `Excelente imóvel localizado em ${district}, ${province}.`,
+        description: fullDescription,
         photos,
         isAdmin,
         authorName: currentUser?.fullName || (isAdmin ? 'Administrador Oficial BNG' : currentUser?.email),
@@ -296,22 +332,157 @@ export const PublicarImovelPage: React.FC<PublicarImovelPageProps> = ({
                       onChange={(e) => setCategoryId(e.target.value)}
                       className="w-full border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold outline-none focus:border-[#C89B3C] bg-white"
                     >
-                      <option value="casas">Casas & Moradias</option>
-                      <option value="apartamentos">Apartamentos</option>
-                      <option value="terrenos">Terrenos & Parcelas</option>
-                      <option value="escritorios">Escritórios</option>
-                      <option value="armazens">Armazéns</option>
-                      <option value="comerciais">Espaços Comerciais</option>
-                      <option value="viaturas">Viaturas</option>
+                      <option value="casas-vivendas">1. Casas e Vivendas</option>
+                      <option value="apartamentos-flats">2. Apartamentos e Flats</option>
+                      <option value="condominios">3. Condomínios Residenciais</option>
+                      <option value="terrenos">4. Terrenos</option>
+                      <option value="escritorios">5. Escritórios</option>
+                      <option value="lojas-salas-comerciais">6. Lojas e Salas Comerciais</option>
+                      <option value="armazens-galpoes">7. Armazéns e Galpões</option>
+                      <option value="saloes-eventos">8. Salões de Eventos</option>
+                      <option value="contentores-modulares">9. Contentores e Estruturas Modulares</option>
+                      <option value="carros-maquinas">10. Carros e Máquinas</option>
                     </select>
                   </div>
                 </div>
 
-                {/* Campos Residenciais */}
+                {/* Campos Específicos para Condomínios Residenciais */}
+                {isCondo && (
+                  <div className="p-4 bg-amber-50/60 rounded-2xl border border-amber-200/80 space-y-4">
+                    <div className="flex items-center justify-between border-b border-amber-200 pb-2">
+                      <span className="text-xs font-black uppercase text-amber-950 flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-[#C89B3C]" />
+                        Características Gerais do Condomínio
+                      </span>
+                      <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">
+                        Empreendimento Global
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Modalidade Comercial do Condomínio *</label>
+                        <select
+                          value={condoCommercialModel}
+                          onChange={(e: any) => setCondoCommercialModel(e.target.value)}
+                          className="w-full p-2 border border-amber-200 rounded-xl text-xs font-bold bg-white"
+                        >
+                          <option value="venda_todo">Venda do Condomínio Todo (Empreendimento Completo)</option>
+                          <option value="venda_fraccoes">Venda de Casas / Fracções Individuais</option>
+                          <option value="arrendamento_casas">Arrendamento das Casas Particulares</option>
+                          <option value="venda_e_arrendamento">Venda e Arrendamento Simultâneo</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Estado de Habitação / Obra *</label>
+                        <select
+                          value={condoConstructionStatus}
+                          onChange={(e: any) => setCondoConstructionStatus(e.target.value)}
+                          className="w-full p-2 border border-amber-200 rounded-xl text-xs font-bold bg-white"
+                        >
+                          <option value="pronto_habitar">Pronto a Habitar (Concluído)</option>
+                          <option value="em_obra">Ainda em Obra / Construção</option>
+                          <option value="em_projeto">Em Projeto / Planta</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Área Total Condomínio (m²)</label>
+                        <input
+                          type="number"
+                          value={condoTotalAreaM2}
+                          onChange={(e) => setCondoTotalAreaM2(e.target.value)}
+                          placeholder="Ex: 5000"
+                          className="w-full p-2 border border-amber-200 rounded-xl text-xs font-bold bg-white"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Número Total de Casas *</label>
+                        <input
+                          type="number"
+                          value={condoTotalHouses}
+                          onChange={(e) => setCondoTotalHouses(e.target.value)}
+                          placeholder="Ex: 8"
+                          className="w-full p-2 border border-amber-200 rounded-xl text-xs font-bold bg-white"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Casas Disponíveis</label>
+                        <input
+                          type="number"
+                          value={condoAvailableHouses}
+                          onChange={(e) => setCondoAvailableHouses(e.target.value)}
+                          placeholder="Ex: 8"
+                          className="w-full p-2 border border-amber-200 rounded-xl text-xs font-bold bg-white"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-700 mb-1">Segurança Privada</label>
+                        <select
+                          value={condoHasSecurity ? 'sim' : 'nao'}
+                          onChange={(e) => setCondoHasSecurity(e.target.value === 'sim')}
+                          className="w-full p-2 border border-amber-200 rounded-xl text-xs font-bold bg-white"
+                        >
+                          <option value="sim">Sim (Portaria & Acesso 24h)</option>
+                          <option value="nao">Sem Portaria / Comum</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">Localização Específica do Condomínio</label>
+                      <input
+                        type="text"
+                        value={condoLocationReference}
+                        onChange={(e) => setCondoLocationReference(e.target.value)}
+                        placeholder="Ex: Boane, Djonasse • Próximo à Estrada Circular"
+                        className="w-full p-2 border border-amber-200 rounded-xl text-xs bg-white"
+                      />
+                    </div>
+
+                    <div className="flex flex-wrap gap-3 pt-1">
+                      <label className="flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 rounded-xl border border-amber-200 text-xs font-semibold text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={condoHasCommonPool}
+                          onChange={(e) => setCondoHasCommonPool(e.target.checked)}
+                          className="rounded text-[#C89B3C]"
+                        />
+                        <span>Piscina Comum</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 rounded-xl border border-amber-200 text-xs font-semibold text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={condoHasPlayground}
+                          onChange={(e) => setCondoHasPlayground(e.target.checked)}
+                          className="rounded text-[#C89B3C]"
+                        />
+                        <span>Parque Infantil</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 rounded-xl border border-amber-200 text-xs font-semibold text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={condoHasGeneratorOrBorehole}
+                          onChange={(e) => setCondoHasGeneratorOrBorehole(e.target.checked)}
+                          className="rounded text-[#C89B3C]"
+                        />
+                        <span>Gerador / Furo de Água Comum</span>
+                      </label>
+                    </div>
+                  </div>
+                )}
+
+                {/* Campos Residenciais (Moradias) */}
                 {isResidential && (
                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
                     <span className="text-xs font-extrabold uppercase text-slate-700 block">
-                      Características Residenciais
+                      {isCondo ? 'Características das Moradias Individuais do Condomínio' : 'Características Residenciais'}
                     </span>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       <div>

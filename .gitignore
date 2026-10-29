@@ -16,6 +16,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 # Segredos e Ambientes Locais
+.env
 .env.local
 .env.*.local
 
@@ -34,3 +35,6 @@ google-services.json
 *.sln
 *.sw?
 scratch/
+android-apk-build/
+stitch_extracted/
+*.zip

@@ -6,17 +6,32 @@ import { AdminNavHeader } from '../components/AdminNavHeader';
 import { 
   Building2, Clock, CheckCircle2, DollarSign, AlertTriangle, 
   ArrowRight, Settings, Image as ImageIcon, CreditCard, Megaphone,
-  Check, ExternalLink, ShieldCheck, PlusCircle
+  Check, ExternalLink, ShieldCheck, PlusCircle, Sparkles, Phone, MessageSquare, Trash2
 } from 'lucide-react';
+import { getStoredLeads, updateLeadStatus, deleteLead, PropertySearchLead } from '../services/aiAssistant';
 
 export const AdminDashboardScreen: React.FC = () => {
   const { navigateTo, currentUser } = useApp();
+  const ADMIN_EMAILS = ['lgtecserv@gmail.com', 'grupobngoficial@gmail.com', 'admin@grupobng.co.mz'];
+  const isAuthorized = currentUser.role === 'admin' && ADMIN_EMAILS.includes(currentUser.email?.toLowerCase().trim() || '');
+
   const [allListings, setAllListings] = useState<Listing[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]);
   const [config, setConfig] = useState<PlatformConfig | null>(null);
   const [loading, setLoading] = useState(true);
+  const [aiLeads, setAiLeads] = useState<PropertySearchLead[]>(() => getStoredLeads());
+
+  const refreshLeads = () => {
+    setAiLeads(getStoredLeads());
+  };
 
   useEffect(() => {
+    if (!isAuthorized) {
+      navigateTo('admin-login');
+      return;
+    }
+
+    refreshLeads();
     // Carrega todos os anúncios sem filtro de status para o admin
     fetchListings({}).then(res => {
       const raw = localStorage.getItem('bng_listings_v1');
@@ -30,7 +45,22 @@ export const AdminDashboardScreen: React.FC = () => {
 
     fetchBanners().then(setBanners);
     fetchPlatformConfig().then(setConfig);
-  }, []);
+
+    window.addEventListener('bng_notifications_updated', refreshLeads);
+    return () => window.removeEventListener('bng_notifications_updated', refreshLeads);
+  }, [isAuthorized]);
+
+  const handleUpdateLeadStatus = (leadId: string, status: 'novo' | 'em_atendimento' | 'atendido') => {
+    updateLeadStatus(leadId, status);
+    refreshLeads();
+  };
+
+  const handleDeleteLead = (leadId: string) => {
+    if (confirm('Tem a certeza que deseja eliminar este pedido de cliente?')) {
+      deleteLead(leadId);
+      refreshLeads();
+    }
+  };
 
   const totalListings = allListings.length;
   const underReviewListings = allListings.filter(l => l.status === 'under_review' || l.status === 'submitted');
@@ -38,6 +68,8 @@ export const AdminDashboardScreen: React.FC = () => {
   const publishedListings = allListings.filter(l => l.status === 'published');
   const soldListings = allListings.filter(l => l.isSold || l.status === 'completed');
   const totalRevenueMt = allListings.filter(l => l.feePayment?.status === 'confirmed').length * 150;
+
+  if (!isAuthorized) return null;
 
   return (
     <div className="min-h-screen bg-[#F3F4F6] pb-24 sm:pb-12">
@@ -235,6 +267,179 @@ export const AdminDashboardScreen: React.FC = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+
+        {/* Módulo de Pedidos de Clientes Captados pela IA ("Ajuda") */}
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-slate-200 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#9B7423] via-[#C89B3C] to-[#F3D785] text-[#14181B] flex items-center justify-center shrink-0 shadow-sm">
+                <Sparkles className="w-5 h-5 fill-current" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm sm:text-base font-extrabold text-slate-900">
+                    Pedidos de Imóveis dos Clientes (IA Ajuda)
+                  </h2>
+                  {aiLeads.filter(l => l.status === 'novo').length > 0 && (
+                    <span className="bg-amber-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full animate-pulse shadow-xs">
+                      {aiLeads.filter(l => l.status === 'novo').length} Novos
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] sm:text-xs text-slate-500">
+                  Especificações colhidas pelo assistente inteligente quando o cliente não encontrou o imóvel
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-end sm:self-auto">
+              <span className="text-[11px] bg-slate-100 text-slate-700 font-bold px-2.5 py-1 rounded-full">
+                Total: {aiLeads.length} pedidos
+              </span>
+            </div>
+          </div>
+
+          {aiLeads.length === 0 ? (
+            <div className="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+              <Sparkles className="w-8 h-8 text-[#C89B3C] mx-auto mb-2 opacity-60" />
+              <h4 className="text-xs sm:text-sm font-bold text-slate-700">Nenhum pedido pendente</h4>
+              <p className="text-[11px] text-slate-500 max-w-md mx-auto mt-1">
+                Quando um cliente utilizar o botão &quot;Ajuda&quot; e procurar um imóvel que ainda não existe no catálogo, a IA colherá os 8 requisitos detalhados e deixará o alerta imediato para a equipa aqui.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-3.5">
+              {aiLeads.map(lead => {
+                const cleanPhone = (lead.clientWhatsapp || lead.clientPhone || '').replace(/\D/g, '');
+                const waMessage = encodeURIComponent(
+                  `Olá ${lead.clientName}! Somos da equipa de atendimento do Grupo BNG Imobiliária. Recebemos o seu pedido de procura de ${lead.propertyType} para ${lead.transactionType === 'venda' ? 'compra' : lead.transactionType === 'arrendamento' ? 'arrendamento' : 'locação/aquisição'} em ${lead.locationPreferred}. Temos novidades para lhe apresentar!`
+                );
+                const waUrl = `https://wa.me/${cleanPhone.startsWith('258') ? cleanPhone : '258' + cleanPhone}?text=${waMessage}`;
+
+                return (
+                  <div 
+                    key={lead.id} 
+                    className={`rounded-2xl border p-4 transition-all shadow-xs ${
+                      lead.status === 'novo' 
+                        ? 'bg-amber-50/40 border-amber-200' 
+                        : lead.status === 'em_atendimento'
+                        ? 'bg-blue-50/30 border-blue-200'
+                        : 'bg-slate-50/70 border-slate-200 opacity-80'
+                    }`}
+                  >
+                    {/* Cabeçalho do Card */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/60 pb-3">
+                      <div className="flex items-center gap-2">
+                        <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+                          lead.status === 'novo' ? 'bg-amber-500 animate-ping' : lead.status === 'em_atendimento' ? 'bg-blue-500' : 'bg-emerald-500'
+                        }`} />
+                        <div>
+                          <h4 className="font-extrabold text-slate-900 text-sm">
+                            {lead.clientName}
+                          </h4>
+                          <div className="text-[10px] text-slate-500 flex items-center gap-2 mt-0.5">
+                            <span>{new Date(lead.createdAt).toLocaleString('pt-MZ')}</span>
+                            <span>•</span>
+                            <span className="font-mono">Tel: {lead.clientPhone}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Ações Rápidas de Contacto */}
+                      <div className="flex items-center gap-1.5 self-start sm:self-auto flex-wrap">
+                        {cleanPhone && (
+                          <a
+                            href={waUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1.5 rounded-xl text-[11px] font-bold flex items-center gap-1 shadow-xs transition-colors"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5" />
+                            <span>WhatsApp</span>
+                          </a>
+                        )}
+
+                        {lead.clientPhone && (
+                          <a
+                            href={`tel:${lead.clientPhone}`}
+                            className="bg-slate-800 hover:bg-slate-900 text-white px-2.5 py-1.5 rounded-xl text-[11px] font-bold flex items-center gap-1 shadow-xs transition-colors"
+                          >
+                            <Phone className="w-3.5 h-3.5" />
+                            <span>Ligar</span>
+                          </a>
+                        )}
+
+                        {/* Status selector */}
+                        <select
+                          value={lead.status}
+                          onChange={(e) => handleUpdateLeadStatus(lead.id, e.target.value as any)}
+                          className="bg-white border border-slate-300 text-slate-800 text-[11px] font-bold rounded-xl px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#C89B3C]"
+                        >
+                          <option value="novo">🔔 Novo</option>
+                          <option value="em_atendimento">⏳ Em Atendimento</option>
+                          <option value="atendido">✅ Atendido</option>
+                        </select>
+
+                        <button
+                          onClick={() => handleDeleteLead(lead.id)}
+                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Eliminar pedido"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Especificações das 8 Perguntas Colhidas pela IA */}
+                    <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+                      <div className="bg-white/80 p-2 rounded-xl border border-slate-200/70">
+                        <span className="text-[10px] text-slate-500 font-semibold block">1. Imóvel:</span>
+                        <strong className="text-slate-800 truncate block">{lead.propertyType}</strong>
+                      </div>
+
+                      <div className="bg-white/80 p-2 rounded-xl border border-slate-200/70">
+                        <span className="text-[10px] text-slate-500 font-semibold block">2. Finalidade:</span>
+                        <strong className="text-slate-800 capitalize block">{lead.transactionType}</strong>
+                      </div>
+
+                      <div className="bg-white/80 p-2 rounded-xl border border-slate-200/70">
+                        <span className="text-[10px] text-slate-500 font-semibold block">3. Localização:</span>
+                        <strong className="text-slate-800 truncate block">{lead.locationPreferred}</strong>
+                      </div>
+
+                      <div className="bg-white/80 p-2 rounded-xl border border-slate-200/70">
+                        <span className="text-[10px] text-slate-500 font-semibold block">4. Tipologia / Dimensão:</span>
+                        <strong className="text-slate-800 truncate block">{lead.typologyOrDimensions}</strong>
+                      </div>
+
+                      <div className="bg-white/80 p-2 rounded-xl border border-slate-200/70 col-span-2">
+                        <span className="text-[10px] text-slate-500 font-semibold block">5. Características Essenciais:</span>
+                        <p className="text-slate-800 text-[11px] leading-tight line-clamp-2">{lead.essentialFeatures}</p>
+                      </div>
+
+                      <div className="bg-white/80 p-2 rounded-xl border border-slate-200/70">
+                        <span className="text-[10px] text-slate-500 font-semibold block">6. Orçamento Máximo:</span>
+                        <strong className="text-[#9B7423] font-bold block">{lead.budget}</strong>
+                      </div>
+
+                      <div className="bg-white/80 p-2 rounded-xl border border-slate-200/70">
+                        <span className="text-[10px] text-slate-500 font-semibold block">7. Quando precisa:</span>
+                        <strong className="text-slate-800 truncate block">{lead.urgencyDeadline}</strong>
+                      </div>
+
+                      {lead.additionalNotes && (
+                        <div className="bg-white/80 p-2 rounded-xl border border-slate-200/70 col-span-2 sm:col-span-4">
+                          <span className="text-[10px] text-slate-500 font-semibold block">8. Informação Adicional:</span>
+                          <p className="text-slate-700 text-[11px] italic">{lead.additionalNotes}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

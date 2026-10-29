@@ -54,6 +54,11 @@ interface AppContextType {
   openNotificationCenter: () => void;
   closeNotificationCenter: () => void;
   unreadNotificationsCount: number;
+
+  // Assistente de IA "Ajuda"
+  isAiHelpOpen: boolean;
+  openAiHelp: () => void;
+  closeAiHelp: () => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -103,6 +108,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsNotificationCenterOpen(false);
     setUnreadNotificationsCount(getUnreadNotificationsCount());
   };
+
+  // Assistente de IA "Ajuda"
+  const [isAiHelpOpen, setIsAiHelpOpen] = useState(false);
+  const openAiHelp = () => setIsAiHelpOpen(true);
+  const closeAiHelp = () => setIsAiHelpOpen(false);
 
   // Refs para evitar problemas de closure assíncrona nas funções de autenticação e navegação
   const currentUserRef = useRef<UserProfile>(currentUser);
@@ -193,7 +203,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const loginUser = async (email: string, pass: string, asAdmin: boolean = false): Promise<{ success: boolean; error?: string }> => {
     const cleanEmail = email.toLowerCase().trim();
-    const isAdmin = ADMIN_EMAILS.includes(cleanEmail) || asAdmin || cleanEmail.includes('admin');
+    const isAdmin = ADMIN_EMAILS.includes(cleanEmail);
 
     if (supabase) {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -203,7 +213,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       if (!error && data?.user) {
         const meta = data.user.user_metadata || {};
-        const isUserAdmin = isAdmin || meta.role === 'admin';
+        const isUserAdmin = isAdmin;
         const profile: UserProfile = {
           id: data.user.id,
           fullName: meta.full_name || (isUserAdmin ? 'Administrador Grupo BNG' : cleanEmail.split('@')[0]),
@@ -414,12 +424,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return;
     }
 
-    // Proteção de rotas administrativas
+    // Proteção de rotas administrativas com verificação rigorosa de e-mails autorizados
     const adminScreens: ScreenName[] = ['admin-dashboard', 'admin-listings', 'admin-banners', 'admin-settings'];
-    if (adminScreens.includes(screen) && userRole !== 'admin') {
-      setCurrentScreen('admin-login');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
+    if (adminScreens.includes(screen)) {
+      const isAuthorizedAdmin = isAuth && userRole === 'admin' && ADMIN_EMAILS.includes(currentUserRef.current.email.toLowerCase().trim());
+      if (!isAuthorizedAdmin) {
+        setCurrentScreen('admin-login');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
     }
 
     setCurrentScreen(screen);
@@ -460,7 +473,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isNotificationCenterOpen,
         openNotificationCenter,
         closeNotificationCenter,
-        unreadNotificationsCount
+        unreadNotificationsCount,
+        isAiHelpOpen,
+        openAiHelp,
+        closeAiHelp
       }}
     >
       {children}

@@ -62,6 +62,46 @@ function mapDbToListing(row: any): Listing {
     vehicleFuel: row.vehicle_fuel,
     vehicleTransmission: row.vehicle_transmission,
     photos: photosList,
+    // Atributos de Condomínios Residenciais
+    condoCommercialModel: row.condo_commercial_model || (
+      row.description?.includes('Modalidade: Venda do Condomínio Todo') ? 'venda_todo' :
+      row.description?.includes('Modalidade: Arrendamento') ? 'arrendamento_casas' :
+      row.description?.includes('Modalidade: Venda e Arrendamento') ? 'venda_e_arrendamento' :
+      row.description?.includes('Modalidade:') ? 'venda_fraccoes' : undefined
+    ),
+    condoTotalAreaM2: row.condo_total_area_m2 || (
+      row.description?.match(/Área Total do Condomínio:\s*(\d+)/i) ? Number(row.description.match(/Área Total do Condomínio:\s*(\d+)/i)[1]) : undefined
+    ),
+    condoTotalHouses: row.condo_total_houses || (
+      row.description?.match(/Total de Casas:\s*(\d+)/i) ? Number(row.description.match(/Total de Casas:\s*(\d+)/i)[1]) : (
+        row.title?.match(/(\d+)\s*CASAS/i) ? Number(row.title.match(/(\d+)\s*CASAS/i)[1]) : undefined
+      )
+    ),
+    condoAvailableHouses: row.condo_available_houses || (
+      row.description?.match(/Casas Disponíveis:\s*(\d+)/i) ? Number(row.description.match(/Casas Disponíveis:\s*(\d+)/i)[1]) : undefined
+    ),
+    condoConstructionStatus: row.condo_construction_status || (
+      row.description?.includes('Estado: Pronto a Habitar') ? 'pronto_habitar' :
+      row.description?.includes('Estado: Em Obras') ? 'em_obra' :
+      row.description?.includes('Estado: Em Projeto') ? 'em_projeto' : undefined
+    ),
+    condoHasSecurity: row.condo_has_security ?? (
+      row.description?.includes('Segurança: Sim') || row.has_security
+    ),
+    condoSecurityDetails: row.condo_security_details || (
+      row.description?.match(/Segurança Detalhes:\s*([^\n\r]+)/i)?.[1]?.trim()
+    ),
+    condoLocationReference: row.condo_location_reference || (
+      row.description?.match(/Localização do Condomínio:\s*([^\n\r]+)/i)?.[1]?.trim()
+    ),
+    condoHouseTypology: row.condo_house_typology || (
+      row.description?.match(/Tipologia das Casas:\s*([^\n\r]+)/i)?.[1]?.trim() || (
+        row.title?.match(/T[1-5]/i)?.[0]?.toUpperCase()
+      )
+    ),
+    condoHasCommonPool: row.condo_has_common_pool ?? row.description?.includes('Piscina Comum'),
+    condoHasPlayground: row.condo_has_playground ?? row.description?.includes('Parque Infantil'),
+    condoHasGeneratorOrBorehole: row.condo_has_generator_or_borehole ?? (row.description?.includes('Gerador') || row.description?.includes('Furo de Água')),
     paymentConditions: {
       planType: row.payment_plan_type || 'full',
       downPaymentPercentage: row.down_payment_percentage,
@@ -88,6 +128,28 @@ function mapDbToListing(row: any): Listing {
     createdAt: row.created_at || new Date().toISOString(),
     updatedAt: row.updated_at || new Date().toISOString()
   };
+}
+
+export async function recordListingView(listingId: string): Promise<number> {
+  const client = supabaseAdmin || supabase;
+  let newViews = 1;
+  try {
+    const { data } = await client
+      .from('listings')
+      .select('views_count')
+      .eq('id', listingId)
+      .single();
+    if (data && typeof data.views_count === 'number') {
+      newViews = data.views_count + 1;
+    }
+    await client
+      .from('listings')
+      .update({ views_count: newViews })
+      .eq('id', listingId);
+  } catch (err) {
+    console.warn('Erro ao atualizar views_count:', err);
+  }
+  return newViews;
 }
 
 // Buscar Imóveis da Nuvem
@@ -171,12 +233,16 @@ export async function fetchWebsiteCategories(): Promise<Category[]> {
     console.warn('Erro ao buscar categorias:', e);
   }
   return [
-    { id: 'casas', slug: 'casas', name: 'Casas', icon: 'home', displayOrder: 1, isActive: true, count: 0 },
-    { id: 'apartamentos', slug: 'apartamentos', name: 'Apartamentos', icon: 'apartment', displayOrder: 2, isActive: true, count: 0 },
-    { id: 'terrenos', slug: 'terrenos', name: 'Terrenos', icon: 'landscape', displayOrder: 3, isActive: true, count: 0 },
-    { id: 'escritorios', slug: 'escritorios', name: 'Escritórios', icon: 'domain', displayOrder: 4, isActive: true, count: 0 },
-    { id: 'comerciais', slug: 'comerciais', name: 'Comerciais', icon: 'storefront', displayOrder: 5, isActive: true, count: 0 },
-    { id: 'viaturas', slug: 'viaturas', name: 'Viaturas', icon: 'directions_car', displayOrder: 6, isActive: true, count: 0 },
+    { id: '688ce998-5398-4176-b62e-1248676e86e5', slug: 'casas-vivendas', name: 'Casas e Vivendas', icon: 'home', displayOrder: 1, isActive: true, count: 0 },
+    { id: 'b237199c-a8a4-4a82-b77c-7006d300b0fa', slug: 'apartamentos-flats', name: 'Apartamentos e Flats', icon: 'apartment', displayOrder: 2, isActive: true, count: 0 },
+    { id: 'b9d6d6ee-bc70-4197-95e1-43568854f5bc', slug: 'condominios', name: 'Condomínios Residenciais', icon: 'holiday_village', displayOrder: 3, isActive: true, count: 0 },
+    { id: 'f37eaa8d-8b7c-44b3-8f3b-71693012718c', slug: 'terrenos', name: 'Terrenos', icon: 'landscape', displayOrder: 4, isActive: true, count: 0 },
+    { id: '751d810a-94ba-4a8c-ba56-dcbecda6d0e8', slug: 'escritorios', name: 'Escritórios', icon: 'domain', displayOrder: 5, isActive: true, count: 0 },
+    { id: 'ad451530-c603-40c5-ac14-46c61df61845', slug: 'lojas-salas-comerciais', name: 'Lojas e Salas Comerciais', icon: 'storefront', displayOrder: 6, isActive: true, count: 0 },
+    { id: 'c4ecf6ad-0e62-4e5a-98d3-15d2ddbe06a3', slug: 'armazens-galpoes', name: 'Armazéns e Galpões', icon: 'warehouse', displayOrder: 7, isActive: true, count: 0 },
+    { id: 'saloes-eventos-id', slug: 'saloes-eventos', name: 'Salões de Eventos', icon: 'celebration', displayOrder: 8, isActive: true, count: 0 },
+    { id: 'contentores-modulares-id', slug: 'contentores-modulares', name: 'Contentores e Estruturas Modulares', icon: 'view_in_ar', displayOrder: 9, isActive: true, count: 0 },
+    { id: 'ccf09372-0523-44e8-9b82-307d3cbf8da5', slug: 'carros-maquinas', name: 'Carros e Máquinas', icon: 'directions_car', displayOrder: 10, isActive: true, count: 0 },
   ];
 }
 
@@ -366,8 +432,31 @@ export type WebsiteUser = UserProfile;
 // Apenas estes e-mails oficiais rigorosamente definidos podem aceder como administrador
 export const STRICT_ADMIN_EMAILS = [
   'lgtecserv@gmail.com',
-  'grupobngoficial@gmail.com'
+  'grupobngoficial@gmail.com',
+  'admin@grupobng.co.mz'
 ];
+
+export function broadcastGlobalAnnouncement(
+  message: string, 
+  type: 'geral' | 'prioritaria' | 'aprovacao' = 'geral',
+  targetAudience: 'all' | 'admin_only' | 'user_only' = 'all',
+  targetUserId?: string
+): void {
+  try {
+    const raw = localStorage.getItem('bng_announcements_v2');
+    const list = raw ? JSON.parse(raw) : [];
+    list.unshift({
+      id: `ann-${Date.now()}`,
+      message,
+      type,
+      targetAudience,
+      targetUserId,
+      createdAt: new Date().toISOString()
+    });
+    localStorage.setItem('bng_announcements_v2', JSON.stringify(list));
+    window.dispatchEvent(new CustomEvent('bng_notifications_updated'));
+  } catch {}
+}
 
 export function isUserAdmin(emailOrUser?: string | UserProfile | null): boolean {
   if (!emailOrUser) return false;

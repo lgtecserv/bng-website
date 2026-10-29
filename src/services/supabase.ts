@@ -100,8 +100,8 @@ export async function uploadToStorage(
 // PERSISTÊNCIA INTEGRADA (LocalStorage / Store)
 // ==========================================
 const STORAGE_KEYS = {
-  LISTINGS: 'bng_listings_v1',
-  CATEGORIES: 'bng_categories_v1',
+  LISTINGS: 'bng_listings_v2',
+  CATEGORIES: 'bng_categories_v2',
   BANNERS: 'bng_banners_v1',
   CONFIG: 'bng_config_v1',
   FAVORITES: 'bng_favorites_v1',
@@ -224,6 +224,46 @@ function mapDbToListing(row: any): Listing {
     submittedAt: row.submitted_at,
     publishedAt: row.published_at,
     photos: photosList,
+    // Atributos de Condomínios Residenciais
+    condoCommercialModel: row.condo_commercial_model || (
+      row.description?.includes('Modalidade: Venda do Condomínio Todo') ? 'venda_todo' :
+      row.description?.includes('Modalidade: Arrendamento') ? 'arrendamento_casas' :
+      row.description?.includes('Modalidade: Venda e Arrendamento') ? 'venda_e_arrendamento' :
+      row.description?.includes('Modalidade:') ? 'venda_fraccoes' : undefined
+    ),
+    condoTotalAreaM2: row.condo_total_area_m2 || (
+      row.description?.match(/Área Total do Condomínio:\s*(\d+)/i) ? Number(row.description.match(/Área Total do Condomínio:\s*(\d+)/i)[1]) : undefined
+    ),
+    condoTotalHouses: row.condo_total_houses || (
+      row.description?.match(/Total de Casas:\s*(\d+)/i) ? Number(row.description.match(/Total de Casas:\s*(\d+)/i)[1]) : (
+        row.title?.match(/(\d+)\s*CASAS/i) ? Number(row.title.match(/(\d+)\s*CASAS/i)[1]) : undefined
+      )
+    ),
+    condoAvailableHouses: row.condo_available_houses || (
+      row.description?.match(/Casas Disponíveis:\s*(\d+)/i) ? Number(row.description.match(/Casas Disponíveis:\s*(\d+)/i)[1]) : undefined
+    ),
+    condoConstructionStatus: row.condo_construction_status || (
+      row.description?.includes('Estado: Pronto a Habitar') ? 'pronto_habitar' :
+      row.description?.includes('Estado: Em Obras') ? 'em_obra' :
+      row.description?.includes('Estado: Em Projeto') ? 'em_projeto' : undefined
+    ),
+    condoHasSecurity: row.condo_has_security ?? (
+      row.description?.includes('Segurança: Sim') || row.has_security
+    ),
+    condoSecurityDetails: row.condo_security_details || (
+      row.description?.match(/Segurança Detalhes:\s*([^\n\r]+)/i)?.[1]?.trim()
+    ),
+    condoLocationReference: row.condo_location_reference || (
+      row.description?.match(/Localização do Condomínio:\s*([^\n\r]+)/i)?.[1]?.trim()
+    ),
+    condoHouseTypology: row.condo_house_typology || (
+      row.description?.match(/Tipologia das Casas:\s*([^\n\r]+)/i)?.[1]?.trim() || (
+        row.title?.match(/T[1-5]/i)?.[0]?.toUpperCase()
+      )
+    ),
+    condoHasCommonPool: row.condo_has_common_pool ?? row.description?.includes('Piscina Comum'),
+    condoHasPlayground: row.condo_has_playground ?? row.description?.includes('Parque Infantil'),
+    condoHasGeneratorOrBorehole: row.condo_has_generator_or_borehole ?? (row.description?.includes('Gerador') || row.description?.includes('Furo de Água')),
     paymentConditions: {
       planType: row.payment_plan_type || 'full',
       downPaymentPercentage: row.down_payment_percentage,
@@ -253,11 +293,32 @@ function mapDbToListing(row: any): Listing {
 }
 
 function mapListingToDb(listing: any): any {
+  let finalDescription = listing.description || '';
+  if (listing.condoTotalHouses || listing.condoTotalAreaM2 || listing.condoCommercialModel) {
+    if (!finalDescription.includes('[DADOS DO CONDOMÍNIO]')) {
+      const condoLines = [
+        '\n\n[DADOS DO CONDOMÍNIO]',
+        listing.condoCommercialModel ? `• Modalidade: ${listing.condoCommercialModel === 'venda_todo' ? 'Venda do Condomínio Todo' : listing.condoCommercialModel === 'arrendamento_casas' ? 'Arrendamento de Casas' : listing.condoCommercialModel === 'venda_e_arrendamento' ? 'Venda e Arrendamento Misto' : 'Venda de Fracções / Casas Particulares'}` : null,
+        listing.condoTotalAreaM2 ? `• Área Total do Condomínio: ${listing.condoTotalAreaM2} m²` : null,
+        listing.condoTotalHouses ? `• Total de Casas: ${listing.condoTotalHouses}` : null,
+        listing.condoAvailableHouses ? `• Casas Disponíveis: ${listing.condoAvailableHouses}` : null,
+        listing.condoConstructionStatus ? `• Estado: ${listing.condoConstructionStatus === 'pronto_habitar' ? 'Pronto a Habitar' : listing.condoConstructionStatus === 'em_obra' ? 'Em Obras / Construção' : 'Em Projeto / Lançamento'}` : null,
+        listing.condoHasSecurity ? `• Segurança: Sim (${listing.condoSecurityDetails || 'Portaria 24h & Controlo de Acesso'})` : '• Segurança: Sem segurança dedicada',
+        listing.condoLocationReference ? `• Localização do Condomínio: ${listing.condoLocationReference}` : null,
+        listing.condoHouseTypology ? `• Tipologia das Casas: ${listing.condoHouseTypology}` : null,
+        listing.condoHasCommonPool ? '• Lazer: Piscina Comum' : null,
+        listing.condoHasPlayground ? '• Lazer: Parque Infantil' : null,
+        listing.condoHasGeneratorOrBorehole ? '• Infraestrutura: Gerador / Furo de Água Comum' : null,
+      ].filter(Boolean).join('\n');
+      finalDescription += condoLines;
+    }
+  }
+
   return {
     title: listing.title,
-    description: listing.description,
+    description: finalDescription,
     category_id: listing.categoryId || null,
-    category_name: listing.categoryName || 'Casas',
+    category_name: listing.categoryName || 'Casas e Vivendas',
     transaction_type: listing.transactionType || 'sale',
     price: listing.price,
     currency: 'MT',
@@ -724,6 +785,28 @@ export async function recordContactClick(listingId: string): Promise<void> {
   }
 }
 
+export async function recordListingView(listingId: string): Promise<number> {
+  const allListings = getLocalData<Listing[]>(STORAGE_KEYS.LISTINGS, []);
+  const target = allListings.find(l => l.id === listingId);
+  let updatedCount = 1;
+  if (target) {
+    target.viewsCount = (target.viewsCount || 0) + 1;
+    updatedCount = target.viewsCount;
+    setLocalData(STORAGE_KEYS.LISTINGS, allListings);
+  }
+
+  const client = supabaseAdmin || supabase;
+  if (client) {
+    try {
+      await client.from('listings').update({
+        views_count: updatedCount
+      }).eq('id', listingId);
+    } catch (err) {}
+  }
+
+  return updatedCount;
+}
+
 // ==========================================
 // FAVORITOS
 // ==========================================
@@ -899,6 +982,8 @@ export interface GlobalBroadcastMessage {
   actionScreen?: string;
   actionId?: string;
   isUpdate?: boolean;
+  targetAudience?: 'all' | 'admin_only' | 'user_only';
+  targetUserId?: string;
 }
 
 let globalBroadcastChannel: any = null;
@@ -913,10 +998,7 @@ export function getGlobalBroadcastChannel() {
 }
 
 /**
- * Transmite um alerta/anúncio para TODOS os utilizadores em tempo real.
- * 1. Notifica via WebSockets Supabase Realtime instantaneamente todos os telemóveis ativos.
- * 2. Persiste na tabela platform_settings para novos acessos e dispositivos offline.
- * 3. Dispara no próprio dispositivo (som, vibração, notificação na barra do sistema e histórico).
+ * Transmite um alerta/anúncio seguro com filtragem de audiência (Admin, Utilizador Específico ou Geral).
  */
 export async function broadcastGlobalAnnouncement(
   title: string,
@@ -924,7 +1006,9 @@ export async function broadcastGlobalAnnouncement(
   type: AppNotification['type'] = 'system',
   actionScreen?: string,
   actionId?: string,
-  isUpdate: boolean = false
+  isUpdate: boolean = false,
+  targetAudience: 'all' | 'admin_only' | 'user_only' = 'all',
+  targetUserId?: string
 ): Promise<void> {
   const senderDeviceId = getOrCreateDeviceId();
   const announcementId = `ann-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
@@ -937,7 +1021,9 @@ export async function broadcastGlobalAnnouncement(
     senderDeviceId,
     actionScreen,
     actionId,
-    isUpdate
+    isUpdate,
+    targetAudience,
+    targetUserId
   };
 
   // 1. Marca imediatamente como visto neste dispositivo para evitar duplicações
@@ -948,8 +1034,22 @@ export async function broadcastGlobalAnnouncement(
     }
   } catch {}
 
-  // 2. Dispara localmente neste telemóvel/dispositivo
-  triggerAppNotification(title, body, type, actionScreen, actionId);
+  // 2. Dispara localmente APENAS se o utilizador atual puder ver (não dispara alerta de admin em aparelho de cliente comum)
+  const savedUserStr = localStorage.getItem('bng_auth_user');
+  const savedUser = savedUserStr ? JSON.parse(savedUserStr) : null;
+  const isLocalUserAdmin = savedUser?.role === 'admin';
+
+  if (targetAudience === 'all') {
+    triggerAppNotification(title, body, type, actionScreen, actionId);
+  } else if (targetAudience === 'admin_only') {
+    if (isLocalUserAdmin) {
+      triggerAppNotification(title, body, type, actionScreen, actionId);
+    }
+  } else if (targetAudience === 'user_only' && targetUserId) {
+    if (savedUser?.id === targetUserId) {
+      triggerAppNotification(title, body, type, actionScreen, actionId);
+    }
+  }
 
   // 3. Emite via WebSockets Supabase Realtime Broadcast para todos os telemóveis conectados
   try {

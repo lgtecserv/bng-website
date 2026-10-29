@@ -104,6 +104,20 @@ export interface Listing {
   landHasWaterNearby?: boolean; // Furo ou FIPAG próximo
   landHasElectricityNearby?: boolean; // Postes EDM próximos
 
+  // Condomínios Residenciais (quando categoria = condominios)
+  condoCommercialModel?: 'venda_todo' | 'venda_fraccoes' | 'arrendamento_casas' | 'venda_e_arrendamento';
+  condoTotalAreaM2?: number; // Área total do empreendimento / condomínio em m²
+  condoTotalHouses?: number; // Número total de casas / moradias no condomínio
+  condoAvailableHouses?: number; // Número de casas disponíveis para venda/arrendamento
+  condoConstructionStatus?: 'pronto_habitar' | 'em_obra' | 'em_projeto';
+  condoHasSecurity?: boolean; // Existência de segurança no condomínio
+  condoSecurityDetails?: string; // Ex: 'Portaria 24h, Guarita, Cerca Elétrica, Câmaras CCTV'
+  condoLocationReference?: string; // Localização específica / Bairro do condomínio
+  condoHouseTypology?: string; // Tipologia das moradias (ex: 'T2', 'T3', 'T4', 'Moradias Geminadas')
+  condoHasCommonPool?: boolean; // Piscina Comum do Condomínio
+  condoHasPlayground?: boolean; // Parque Infantil / Área de Lazer
+  condoHasGeneratorOrBorehole?: boolean; // Gerador de Emergência ou Furo de Água Comum
+
   // Comerciais & Armazéns
   ceilingHeightM?: number; // Pé-direito em metros
   hasLoadingDock?: boolean; // Cais de carga/descarga

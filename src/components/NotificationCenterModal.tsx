@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   AppNotification, 
   getStoredNotifications, 
+  saveStoredNotifications,
   clearAllNotifications,
   deleteNotification,
   markNotificationAsRead,
@@ -22,26 +23,51 @@ interface NotificationCenterModalProps {
 }
 
 export const NotificationCenterModal: React.FC<NotificationCenterModalProps> = ({ isOpen, onClose }) => {
-  const { navigateTo } = useApp();
+  const { navigateTo, currentUser } = useApp();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [testSent, setTestSent] = useState(false);
   const [clearedNotice, setClearedNotice] = useState(false);
 
+  const isUserAdmin = currentUser.role === 'admin';
+
+  // Filtro de Segurança e Privacidade para garantir que visitantes e clientes nunca vejam pedidos/leads de terceiros
+  const filterByRole = (list: AppNotification[]) => {
+    if (isUserAdmin) return list;
+    return list.filter(n => {
+      const t = n.title.toLowerCase();
+      const b = n.body.toLowerCase();
+      if (t.includes('lead') || t.includes('pedido de imóvel') || b.includes('tel:') || b.includes('procura') || n.actionScreen?.startsWith('admin-')) {
+        return false;
+      }
+      return true;
+    });
+  };
+
   useEffect(() => {
     if (isOpen) {
-      setNotifications(getStoredNotifications());
+      const stored = getStoredNotifications();
+      // Limpa dados de lead se o utilizador atual não for admin
+      if (!isUserAdmin) {
+        const cleaned = filterByRole(stored);
+        if (cleaned.length !== stored.length) {
+          saveStoredNotifications(cleaned);
+        }
+        setNotifications(cleaned);
+      } else {
+        setNotifications(stored);
+      }
       setClearedNotice(false);
     }
-  }, [isOpen]);
+  }, [isOpen, isUserAdmin]);
 
   // Listener para sincronização em tempo real se novas notificações chegarem
   useEffect(() => {
     const handleSync = () => {
-      setNotifications(getStoredNotifications());
+      setNotifications(filterByRole(getStoredNotifications()));
     };
     window.addEventListener('bng_notifications_updated', handleSync);
     return () => window.removeEventListener('bng_notifications_updated', handleSync);
-  }, []);
+  }, [isUserAdmin]);
 
   if (!isOpen) return null;
 

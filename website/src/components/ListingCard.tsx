@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Listing } from '../types';
-import { Heart, MapPin, Bed, Bath, Maximize, Calendar } from 'lucide-react';
+import { Heart, MapPin, Bed, Bath, Maximize, Calendar, Eye } from 'lucide-react';
 
 interface ListingCardProps {
   listing: Listing;
@@ -144,6 +144,11 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, onSelect }) =
               <span className="font-semibold text-slate-700">{listing.vehicleYear}</span>
             </div>
           )}
+
+          <div className="flex items-center space-x-1 text-slate-400" title={`${listing.viewsCount || 1} visualizações`}>
+            <Eye className="w-3 h-3 text-[#C89B3C]" />
+            <span className="text-[9px] font-bold text-slate-600">{listing.viewsCount || 1}</span>
+          </div>
         </div>
       </div>
     </div>

@@ -110,7 +110,13 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing }) => {
 
         {/* Features Compactos (lado a lado 2x2) */}
         <div className="pt-1.5 border-t border-slate-100 flex items-center justify-between text-slate-500 text-[10px]">
-          {listing.bedrooms !== undefined ? (
+          {listing.condoTotalHouses !== undefined ? (
+            <div className="flex items-center space-x-0.5 text-[#C89B3C]" title={`${listing.condoTotalHouses} Casas no Condomínio`}>
+              <span className="material-symbols-outlined text-[13px]">holiday_village</span>
+              <span className="font-extrabold text-slate-900">{listing.condoTotalHouses}</span>
+              <span className="text-slate-400">casas</span>
+            </div>
+          ) : listing.bedrooms !== undefined ? (
             <div className="flex items-center space-x-0.5" title={`${listing.bedrooms} Quartos`}>
               <Bed className="w-3 h-3 text-slate-400" />
               <span className="font-semibold text-slate-700">{listing.bedrooms}</span>

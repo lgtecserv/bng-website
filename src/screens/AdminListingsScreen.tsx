@@ -211,13 +211,32 @@ export const AdminListingsScreen: React.FC = () => {
         return;
       }
       await updateListingStatus(listingId, 'published');
+
+      // 1. Notificação individual e confidencial para o anunciante proprietário do imóvel
+      if (target?.userId) {
+        await broadcastGlobalAnnouncement(
+          '🎉 O seu Anúncio foi Aprovado!',
+          `Parabéns! O seu anúncio "${target.title}" foi validado pela administração e já está publicado com sucesso no Grupo BNG.`,
+          'listing_published',
+          'detail',
+          listingId,
+          false,
+          'user_only',
+          target.userId
+        );
+      }
+
+      // 2. Notificação pública para a comunidade de utilizadores
       await broadcastGlobalAnnouncement(
-        '🎉 Imóvel Aprovado e Publicado!',
-        `O anúncio "${target?.title || ''}" está agora visível no catálogo oficial do Grupo BNG.`,
+        '🏠 Novo Imóvel Disponível no Grupo BNG!',
+        `Novo(a) ${target?.categoryName || 'imóvel'}: "${target?.title || ''}" em ${target?.district || ''}, ${target?.province || ''}. Confira fotos e condições!`,
         'listing_published',
         'detail',
-        listingId
+        listingId,
+        false,
+        'all'
       );
+
       setFeedback('Anúncio Aprovado e Publicado com Sucesso!');
       triggerRefresh();
       setActiveModalListing(null);
@@ -237,11 +256,21 @@ export const AdminListingsScreen: React.FC = () => {
       await updateListingStatus(activeModalListing.id, 'changes_requested', {
         correctionMessage: correctionMsg.trim()
       });
-      await broadcastGlobalAnnouncement(
-        '⚠️ Anúncio Requer Correcções',
-        `O anúncio "${activeModalListing.title}" necessita de correções pelo anunciante.`,
-        'system'
-      );
+
+      // Notificação confidencial exclusiva para o autor
+      if (activeModalListing?.userId) {
+        await broadcastGlobalAnnouncement(
+          '⚠️ Ajustes Solicitados no seu Anúncio',
+          `A moderação do Grupo BNG solicitou a seguinte revisão no seu anúncio: "${correctionMsg.trim()}"`,
+          'system',
+          'my-listings',
+          activeModalListing.id,
+          false,
+          'user_only',
+          activeModalListing.userId
+        );
+      }
+
       setFeedback('Pedido de correcções enviado ao anunciante com sucesso!');
       triggerRefresh();
       setActiveModalListing(null);

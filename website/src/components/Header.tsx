@@ -15,7 +15,8 @@ import {
   ChevronDown,
   Sparkles,
   ShoppingBag,
-  ShieldCheck
+  ShieldCheck,
+  Bot
 } from 'lucide-react';
 import { WebsiteUser } from '../services/supabase';
 
@@ -27,7 +28,10 @@ export type ActivePage =
   | 'servicos-procurement' 
   | 'contato' 
   | 'admin' 
-  | 'publicar';
+  | 'publicar'
+  | 'privacidade'
+  | 'termos'
+  | 'parcerias';
 
 interface HeaderProps {
   activePage: ActivePage;
@@ -37,6 +41,7 @@ interface HeaderProps {
   onOpenRegister: () => void;
   onOpenPublish: () => void;
   onLogout: () => void;
+  onOpenAiHelp?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -47,6 +52,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenRegister,
   onOpenPublish,
   onLogout,
+  onOpenAiHelp,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [servicesDropdownOpen, setServicesDropdownOpen] = useState(false);
@@ -191,6 +197,18 @@ export const Header: React.FC<HeaderProps> = ({
             <Mail className="w-4 h-4" />
             <span>Contato</span>
           </button>
+
+          {onOpenAiHelp && (
+            <button
+              onClick={onOpenAiHelp}
+              className="transition-all py-1.5 px-3 rounded-xl flex items-center gap-1.5 bg-gradient-to-r from-amber-500/20 via-yellow-500/20 to-amber-500/10 border border-[#C89B3C]/50 text-[#C89B3C] hover:text-white hover:border-[#C89B3C] font-bold shadow-xs active:scale-95"
+              title="Consultor Imobiliário Oficial de IA"
+            >
+              <Bot className="w-4 h-4 text-[#C89B3C]" />
+              <span>Ajuda IA</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            </button>
+          )}
         </nav>
 
         {/* Lado Direito do Header — Limpo, Elegante e Sem Repetições */}
@@ -338,6 +356,22 @@ export const Header: React.FC<HeaderProps> = ({
             <Mail className="w-4 h-4" />
             <span>Contato</span>
           </button>
+
+          {onOpenAiHelp && (
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                onOpenAiHelp();
+              }}
+              className="w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-bold flex items-center justify-between bg-amber-500/15 border border-[#C89B3C]/40 text-[#C89B3C]"
+            >
+              <div className="flex items-center gap-2.5">
+                <Bot className="w-4 h-4 text-[#C89B3C]" />
+                <span>Ajuda IA • Consultor BNG</span>
+              </div>
+              <span className="bg-[#D4AF37] text-slate-950 text-[9px] px-1.5 py-0.5 rounded font-black uppercase">ONLINE</span>
+            </button>
+          )}
 
           {/* Atalho Painel Admin no Menu Mobile */}
           {currentUser?.role === 'admin' && (

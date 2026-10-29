@@ -59,6 +59,27 @@ const routes = [
     robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1'
   },
   {
+    path: 'privacidade',
+    title: 'Política de Privacidade | Grupo BNG Moçambique',
+    description: 'Consulte as diretrizes de privacidade, proteção de dados pessoais e segurança da informação do Grupo BNG em conformidade com a legislação de Moçambique.',
+    canonical: 'https://www.grupobngoficial.com/privacidade',
+    robots: 'index, follow'
+  },
+  {
+    path: 'termos',
+    title: 'Termos de Uso e Condições Gerais | Grupo BNG Moçambique',
+    description: 'Termos e condições de utilização da plataforma digital imobiliária e serviços corporativos do Grupo BNG. Regras de publicação e transações.',
+    canonical: 'https://www.grupobngoficial.com/termos',
+    robots: 'index, follow'
+  },
+  {
+    path: 'parcerias',
+    title: 'Políticas de Parcerias e Co-Corretagem Imobiliária | Grupo BNG',
+    description: 'Diretrizes oficiais de parceria e co-corretagem do Grupo BNG com agências e corretores: divisão equitativa 50/50 e regra estrita de no máximo 1 intermediário.',
+    canonical: 'https://www.grupobngoficial.com/parcerias',
+    robots: 'index, follow'
+  },
+  {
     path: 'admin',
     title: 'Painel Administrativo | Grupo BNG',
     description: 'Painel de gestão interna do Grupo BNG.',

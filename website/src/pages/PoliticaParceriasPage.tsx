@@ -11,6 +11,7 @@ import {
   CheckCircle2, 
   MessageSquare, 
   Phone,
+  Mail,
   Briefcase,
   BadgeAlert,
   Percent

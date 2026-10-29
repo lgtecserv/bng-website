@@ -4,10 +4,10 @@ import { fetchListings, fetchCategories, fetchBanners } from '../services/supaba
 import { Listing, Category, Banner } from '../types';
 import { ListingCard } from '../components/ListingCard';
 import { openExternalUrl } from '../services/nativeBridge';
-import { Search, SlidersHorizontal, ArrowRight, Sparkles, Building2, ChevronRight } from 'lucide-react';
+import { Search, SlidersHorizontal, ArrowRight, Sparkles, Building2, ChevronRight, FolderOpen, PlusCircle } from 'lucide-react';
 
 export const HomeScreen: React.FC = () => {
-  const { navigateTo, refreshTrigger } = useApp();
+  const { navigateTo, refreshTrigger, openAiHelp, isAuthenticated, currentUser, openAuthModal } = useApp();
   const [listings, setListings] = useState<Listing[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]);
@@ -114,6 +114,48 @@ export const HomeScreen: React.FC = () => {
             <div className="bg-[#C89B3C] text-[#14181B] p-2 rounded-xl shadow-md shrink-0">
               <SlidersHorizontal className="w-4 h-4" />
             </div>
+          </div>
+
+          {/* Atalhos Rápidos no Topo: Meus Anúncios, Ajuda IA e Publicar */}
+          <div className="flex items-center gap-2 mt-3 overflow-x-auto no-scrollbar py-0.5">
+            <button
+              onClick={() => {
+                if (!isAuthenticated || currentUser.role === 'visitor') {
+                  openAuthModal('login', 'my-listings');
+                } else {
+                  navigateTo('my-listings');
+                }
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 active:scale-95 text-white text-xs font-medium border border-white/10 shrink-0 transition-all shadow-sm"
+              title="Aceder aos meus anúncios"
+            >
+              <FolderOpen className="w-3.5 h-3.5 text-[#C89B3C]" />
+              <span>Meus Anúncios</span>
+            </button>
+
+            <button
+              onClick={openAiHelp}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-[#C89B3C]/30 to-amber-400/20 hover:from-amber-500/30 hover:to-[#C89B3C]/40 active:scale-95 text-[#E3BE63] text-xs font-bold border border-[#C89B3C]/40 shrink-0 transition-all shadow-sm"
+              title="Ajuda com Inteligência Artificial"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-[#C89B3C] fill-[#C89B3C]" />
+              <span>Ajuda IA</span>
+            </button>
+
+            <button
+              onClick={() => {
+                if (!isAuthenticated || currentUser.role === 'visitor') {
+                  openAuthModal('register', 'create');
+                } else {
+                  navigateTo('create');
+                }
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#C89B3C] hover:bg-[#B6882C] active:scale-95 text-[#14181B] text-xs font-bold shrink-0 transition-all shadow-sm"
+              title="Publicar novo anúncio"
+            >
+              <PlusCircle className="w-3.5 h-3.5" />
+              <span>Publicar</span>
+            </button>
           </div>
         </div>
       </div>

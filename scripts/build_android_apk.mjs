@@ -671,8 +671,13 @@ public class NetworkReceiver extends BroadcastReceiver {
 
   fs.writeFileSync(path.join(srcDir, 'NetworkReceiver.java'), receiverCode);
 
+  // 4. Compilar os ficheiros web actualizados do aplicativo com Vite
+  console.log('4. A compilar os ficheiros web actualizados do aplicativo com Vite...');
+  const viteCmd = process.platform === 'win32' ? '.\\node_modules\\.bin\\vite.cmd build' : 'npx vite build';
+  run(viteCmd);
+
   // 5. Copiar toda a compilação web dist/ para assets/www/
-  console.log('4. A empacotar aplicação web em assets/www...');
+  console.log('4.1 A empacotar aplicação web em assets/www...');
   const distDir = path.join(ROOT_DIR, 'dist');
   fs.cpSync(distDir, assetsDir, { recursive: true });
 

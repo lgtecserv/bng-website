@@ -1,6 +1,6 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { Search, PlusCircle, User, ShieldCheck, Bell, Sparkles } from 'lucide-react';
+import { Search, PlusCircle, User, ShieldCheck, Bell, Sparkles, FolderOpen } from 'lucide-react';
 import logoImg from '../assets/logo.png';
 
 export const AppHeader: React.FC = () => {
@@ -19,6 +19,14 @@ export const AppHeader: React.FC = () => {
       openAuthModal('register', 'create');
     } else {
       navigateTo('create');
+    }
+  };
+
+  const handleMyListingsClick = () => {
+    if (!isAuthenticated || currentUser.role === 'visitor') {
+      openAuthModal('login', 'my-listings');
+    } else {
+      navigateTo('my-listings');
     }
   };
 
@@ -57,6 +65,16 @@ export const AppHeader: React.FC = () => {
           >
             <Sparkles className="w-3.5 h-3.5 text-[#C89B3C] fill-[#C89B3C]" />
             <span className="hidden xs:inline">Ajuda</span>
+          </button>
+
+          {/* Botão Meus Anúncios no Topo */}
+          <button
+            onClick={handleMyListingsClick}
+            className="flex items-center gap-1.5 px-2.5 py-1 sm:py-1.5 rounded-full bg-slate-800/90 hover:bg-slate-700/90 text-slate-200 hover:text-[#C89B3C] border border-slate-700 text-xs font-semibold transition-all active:scale-95 shrink-0 shadow-sm"
+            title="Aceder aos Meus Anúncios"
+          >
+            <FolderOpen className="w-3.5 h-3.5 text-[#C89B3C]" />
+            <span className="hidden xs:inline text-[11px] sm:text-xs">Meus Anúncios</span>
           </button>
 
           {/* Botão de Pesquisa */}
